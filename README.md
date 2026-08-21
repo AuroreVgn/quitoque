@@ -1,16 +1,18 @@
 # Quitoque pour Home Assistant
 
-[![GitHub Release](https://img.shields.io/github/v/release/AuroreVgn/quitoque?style=flat-square)](https://github.com/AuroreVgn/quitoque/releases)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://www.hacs.xyz/)
-[![Validate](https://github.com/AuroreVgn/quitoque/actions/workflows/validate.yml/badge.svg)](https://github.com/AuroreVgn/quitoque/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![GitHub Release][releases-shield]][releases]
+[![License][license-shield]](LICENSE)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.3%2B-41BDF5.svg?style=flat-square&logo=homeassistant)](https://www.home-assistant.io/)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://hacs.xyz/)
+[![Maintainer](https://img.shields.io/badge/Maintainer-AuroreVgn-blue.svg?style=flat-square)](https://github.com/AuroreVgn)
 
-Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines box et recettes d'un compte **Quitoque**, de les ajouter à un calendrier Home Assistant et de générer les fiches recettes en PDF.
+
+Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de les ajouter à un calendrier Home Assistant (ou Google) et de générer les fiches recettes en PDF.
 
 > [!IMPORTANT]
 > Cette intégration est un projet communautaire non officiel. Elle n'est ni développée, ni maintenue, ni supportée par Quitoque.
 
-## Fonctionnalités
+## ✨ Fonctionnalités
 
 - Connexion au compte Quitoque directement depuis le **config flow** Home Assistant.
 - Détection des **livraisons actives** et exclusion des semaines suspendues.
@@ -20,15 +22,14 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Ajout des recettes dans un calendrier Home Assistant ou un calendrier Google exposé à Home Assistant.
 - Création d'un événement **journée entière** pour la livraison.
 - Création d'événements recette d'une heure entre **08:00 et 11:00**.
-- Titre des recettes sous la forme `PRÉFIXE S36 - Nom de la recette`.
+- Titre des recettes sous la forme `PRÉFIXE Sn° - Nom de la recette` avec `Sn°` correspond au numéro de la semaine.
 - Préfixe d'événement personnalisable.
-- Anti-doublon basé sur **l'année ISO + le numéro de semaine**, même si les événements ont ensuite été déplacés dans le calendrier.
+- Anti-doublon basé sur **l'année + le numéro de semaine**, même si les événements ont ensuite été déplacés dans le calendrier.
 - Import de plusieurs semaines en une seule synchronisation.
 - Actualisation manuelle sans recharger l'intégration.
 - Notification Home Assistant optionnelle après une synchronisation du calendrier.
 - Génération d'un **PDF par recette**, avec image, durée, portions et ingrédients/quantités lorsqu'ils sont fournis par Quitoque.
 - Téléchargement individuel des PDF ou de l'ensemble dans une archive ZIP.
-- Remplacement du ZIP lors d'une nouvelle génération.
 - Suppression automatique des PDF après un délai configurable.
 - Verrouillage temporaire des boutons pendant une actualisation, une synchronisation ou une génération PDF.
 - Quatre entités de **diagnostic persistantes** mémorisent la dernière synchronisation du calendrier, la dernière génération des PDF, le résultat de la dernière action et la dernière erreur, y compris après un redémarrage de Home Assistant.
@@ -116,7 +117,6 @@ Renseigner :
 | Notification après synchronisation | Facultatif ; affiche une notification Home Assistant avec le nombre d’événements créés |
 | Calendrier de destination | Calendrier Home Assistant dans lequel créer les événements |
 
-L'intégration récupère automatiquement le jeton CSRF du formulaire officiel et maintient sa propre session Quitoque.
 
 ## Calendrier
 
@@ -124,11 +124,11 @@ Le bouton **Ajouter les recettes au calendrier** traite uniquement les box activ
 
 Pour chaque livraison :
 
-- un événement **journée entière** est créé le jour de la livraison ;
-- les recettes sont ajoutées sous forme d'événements d'une heure à partir de **08:00** ;
-- le créneau de livraison est ajouté au texte de l'événement lorsqu'il est disponible ;
-- le numéro de semaine est conservé dans le titre ;
-- le préfixe configuré est ajouté avant le numéro de semaine.
+- un événement **journée entière** est créé le jour de la livraison
+- les recettes sont ajoutées sous forme d'événements d'une heure à partir de **08:00**
+- le créneau de livraison est ajouté au texte de l'événement lorsqu'il est disponible
+- le numéro de semaine est conservé dans le titre
+- le préfixe configuré est ajouté avant le numéro de semaine
 
 Exemple avec le préfixe `QT` :
 
@@ -136,9 +136,11 @@ Exemple avec le préfixe `QT` :
 QT S36 - Bowl d'aubergine, ricotta fouettée à l'aneth
 ```
 
+Le titre de l’événement de journée entière inclut le créneau récupéré chez Quitoque, par exemple `QT S36 - Livraison Quitoque - 08h00 - 13h00`.
+
 ### Protection contre les doublons
 
-Chaque semaine importée reçoit un marqueur interne basé sur **l'année ISO et le numéro de semaine**.
+Chaque semaine importée reçoit un marqueur interne basé sur **l'année et le numéro de semaine**.
 
 Ainsi :
 
@@ -166,19 +168,17 @@ Il suffit de sélectionner ce calendrier dans le champ **Calendrier de destinati
 
 Le bouton **Générer et télécharger les PDF** récupère le détail des recettes des prochaines box actives et crée :
 
-- un PDF par recette ;
-- l'image de la recette lorsqu'elle est disponible ;
-- une mise en page imprimable de la fiche ;
-- la durée et le nombre de portions lorsqu'ils sont disponibles ;
-- les ingrédients fournis **dans votre box** et leurs quantités ;
-- les éléments **dans votre cuisine** dans une section distincte ;
-- le **matériel** dans une troisième section distincte ;
-- le déroulé de la recette étape par étape ;
-- une archive ZIP regroupant les PDF générés.
+- un PDF par recette
+- l'image de la recette lorsqu'elle est disponible
+- une mise en page imprimable de la fiche
+- la durée et le nombre de portions lorsqu'ils sont disponibles
+- les ingrédients fournis **dans votre box** et leurs quantités
+- les éléments **dans votre cuisine** dans une section distincte
+- le **matériel** dans une troisième section distincte
+- le déroulé de la recette étape par étape
+- une archive ZIP regroupant les PDF générés
 
 Lors d'une nouvelle génération, l'archive ZIP précédente est remplacée.
-
-Le parseur s'appuie en priorité sur les sections HTML explicites de Quitoque afin de conserver la distinction entre **Dans votre box**, **Dans votre cuisine** et **Matériel**. Une détection de secours est conservée pour d'éventuelles anciennes mises en page.
 
 Le délai de conservation est configurable dans les options de l'intégration. Une valeur de `0` désactive la suppression automatique.
 
@@ -224,15 +224,6 @@ Les services utilisent exactement les mêmes mécanismes que les boutons : verro
 
 
 
-## Validation et tests
-
-Le dépôt inclut des workflows GitHub Actions pour :
-
-- la validation **HACS** ;
-- **Hassfest** ;
-- des **tests unitaires** sur les points sensibles du parseur et de l'anti-doublon : semaines actives/suspendues, plusieurs box actives, durées, données structurées des recettes, noms de fichiers PDF, passage S52/S53 → S01, absence de livraison et déplacement d’événements d’une année à l’autre.
-
-
 ## Dépannage
 
 Pour activer les journaux détaillés :
@@ -251,7 +242,7 @@ Après redémarrage, les messages sont disponibles dans **Paramètres → Systè
 
 ## Compatibilité
 
-Cette intégration dépend de l'interface web de Quitoque. Une modification du site peut donc nécessiter une mise à jour de l'intégration.
+**Cette intégration dépend de l'interface web de Quitoque. Une modification du site peut donc nécessiter une mise à jour de l'intégration.**
 
 Si une page ou une donnée n'est plus détectée, ouvrez une issue en fournissant les journaux **sans donnée d'authentification**.
 
@@ -261,15 +252,16 @@ Les retours, corrections et propositions d'amélioration sont les bienvenus via 
 
 Lors d'un signalement, pensez à indiquer :
 
-- la version de Home Assistant ;
-- la version de l'intégration Quitoque ;
-- le comportement attendu ;
-- les logs pertinents anonymisés.
+- la version de Home Assistant
+- la version de l'intégration Quitoque
+- le comportement attendu
+- les logs pertinents anonymisés
+
 ## Licence
 
 Projet distribué sous licence [MIT](LICENSE).
 
 
-### Événement de livraison
-
-Le titre de l’événement de journée entière inclut le créneau récupéré chez Quitoque, par exemple `QT S36 - Livraison Quitoque - 08h00 - 13h00`.
+[releases-shield]: https://img.shields.io/github/v/release/AuroreVgn/quitoque?style=flat-square
+[releases]: https://github.com/AuroreVgn/quitoque/releases
+[license-shield]: https://img.shields.io/github/license/AuroreVgn/quitoque?style=flat-square
