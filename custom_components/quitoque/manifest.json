@@ -1,0 +1,19 @@
+{
+  "domain": "quitoque",
+  "name": "Quitoque",
+  "codeowners": [
+    "@AuroreVgn"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/AuroreVgn/quitoque",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "loggers": [
+    "custom_components.quitoque"
+  ],
+  "version": "1.0.0",
+  "requirements": [
+    "reportlab==4.4.9"
+  ],
+  "issue_tracker": "https://github.com/AuroreVgn/quitoque/issues"
+}

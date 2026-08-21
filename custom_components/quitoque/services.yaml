@@ -1,0 +1,31 @@
+refresh:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: quitoque
+
+sync_calendar:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: quitoque
+
+generate_pdfs:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: quitoque
+
+cleanup_pdfs:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: quitoque
