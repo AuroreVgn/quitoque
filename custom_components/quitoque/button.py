@@ -16,6 +16,7 @@ from .actions import (
     managed_orders,
 )
 from .entity import QuitoqueEntity
+from .i18n import localize
 
 
 async def async_setup_entry(
@@ -101,20 +102,32 @@ class QuitoquePdfButton(QuitoqueEntity, ButtonEntity):
             for name, url in generated
         )
 
-        message = f"{len(generated)} PDF de recette(s) généré(s)."
+        if localize(self.hass, "fr", "en") == "fr":
+            message = f"{len(generated)} PDF de recette(s) généré(s)."
+            archive_label = "Télécharger toutes les recettes (.zip)"
+            individual_label = "Téléchargements individuels"
+            errors_label = "Recettes non exportées"
+            notification_title = "PDF Quitoque prêts"
+        else:
+            message = f"{len(generated)} recipe PDF(s) generated."
+            archive_label = "Download all recipes (.zip)"
+            individual_label = "Individual downloads"
+            errors_label = "Recipes not exported"
+            notification_title = "Quitoque PDFs ready"
+
         if archive_url:
             message += (
                 f'<br><br><a href="{archive_url}" target="_blank" download>'
-                "Télécharger toutes les recettes (.zip)</a>"
+                f"{archive_label}</a>"
             )
         if links:
-            message += f"<br><br>Téléchargements individuels :<br>{links}"
+            message += f"<br><br>{individual_label}:<br>{links}"
         if errors:
-            message += "<br><br>Recettes non exportées :<br>" + "<br>".join(errors)
+            message += f"<br><br>{errors_label}:<br>" + "<br>".join(errors)
 
         persistent_notification.async_create(
             self.hass,
             message,
-            title="PDF Quitoque prêts",
+            title=notification_title,
             notification_id="quitoque_recipes_pdf",
         )

@@ -21,6 +21,7 @@ from .actions import (
     async_sync_calendar,
 )
 from .api import QuitoqueClient
+from .i18n import localize
 from .const import (
     CONF_PDF_RETENTION_DAYS,
     CONF_RECIPES_URL,
@@ -69,17 +70,33 @@ def _resolve_service_entry(
     if entry_id:
         entry = hass.config_entries.async_get_entry(entry_id)
         if entry is None or entry.domain != DOMAIN:
-            raise HomeAssistantError("Entrée de configuration Quitoque introuvable")
+            raise HomeAssistantError(
+                localize(
+                    hass,
+                    "Entrée de configuration Quitoque introuvable",
+                    "Quitoque config entry not found",
+                )
+            )
         return entry
 
     if len(entries) == 1:
         return entries[0]
 
     if not entries:
-        raise HomeAssistantError("Aucune entrée Quitoque chargée")
+        raise HomeAssistantError(
+            localize(
+                hass,
+                "Aucune entrée Quitoque chargée",
+                "No Quitoque config entry is loaded",
+            )
+        )
 
     raise HomeAssistantError(
-        "Plusieurs comptes Quitoque sont configurés : précisez config_entry_id"
+        localize(
+            hass,
+            "Plusieurs comptes Quitoque sont configurés : précisez config_entry_id",
+            "Multiple Quitoque accounts are configured: specify config_entry_id",
+        )
     )
 
 

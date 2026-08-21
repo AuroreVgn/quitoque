@@ -11,6 +11,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import QuitoqueConfigEntry
 from .entity import QuitoqueEntity
+from .i18n import localize
 
 
 async def async_setup_entry(
@@ -26,8 +27,8 @@ async def async_setup_entry(
             QuitoqueWeekRecipeCountSensor(entry, 4),
             QuitoqueLastActionSensor(entry, "last_calendar_sync"),
             QuitoqueLastActionSensor(entry, "last_pdf_generation"),
-            QuitoqueLastTextSensor(entry, "last_status", "Aucune action"),
-            QuitoqueLastTextSensor(entry, "last_error", "Aucune"),
+            QuitoqueLastTextSensor(entry, "last_status", "never"),
+            QuitoqueLastTextSensor(entry, "last_error", "none"),
         ]
     )
 
@@ -63,7 +64,9 @@ class QuitoqueWeekDeliverySensor(QuitoqueEntity, SensorEntity):
     @property
     def native_value(self):
         order = _order_for_week(self.coordinator, self._week_offset)
-        return order.delivery_date.isoformat() if order is not None else "Non"
+        if order is not None:
+            return order.delivery_date.isoformat()
+        return localize(self.hass, "Non", "No")
 
     @property
     def extra_state_attributes(self):
@@ -104,7 +107,10 @@ class QuitoqueWeekRecipeCountSensor(QuitoqueEntity, SensorEntity):
     """Recipe count for one of the next three calendar weeks."""
 
     _attr_icon = "mdi:food-variant"
-    _attr_native_unit_of_measurement = "recettes"
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return the localized recipe unit."""
+        return localize(self.hass, "recettes", "recipes")
 
     def __init__(self, entry: QuitoqueConfigEntry, week_offset: int) -> None:
         super().__init__(entry)
@@ -204,11 +210,24 @@ class QuitoqueLastTextSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
         if last_state is not None and last_state.state not in (
             "unknown",
             "unavailable",
-            "none",
         ):
             restored = last_state.state
-            if self._action_key == "last_status" and restored == "Jamais":
-                restored = "Aucune action"
+
+            # Migrate values stored by earlier releases.
+            if self._action_key == "last_status":
+                restored = {
+                    "Jamais": "never",
+                    "Aucune action": "never",
+                    "Succès": "success",
+                    "Erreur": "error",
+                    "Aucune livraison": "no_delivery",
+                }.get(restored, restored)
+            elif self._action_key == "last_error":
+                restored = {
+                    "Aucune": "none",
+                    "None": "none",
+                }.get(restored, restored)
+
             self._attr_native_value = restored
 
         registry = self.hass.data.setdefault("quitoque_action_sensors", {})
@@ -219,6 +238,27 @@ class QuitoqueLastTextSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
             (self._entry.entry_id, self._action_key), None
         )
         await super().async_will_remove_from_hass()
+
+    @property
+    def native_value(self):
+        """Return localized diagnostic values while storing canonical tokens."""
+        value = self._attr_native_value
+
+        if self._action_key == "last_status":
+            labels = {
+                "never": ("Aucune action", "No action yet"),
+                "success": ("Succès", "Success"),
+                "error": ("Erreur", "Error"),
+                "no_delivery": ("Aucune livraison", "No delivery"),
+            }
+            if value in labels:
+                fr, en = labels[value]
+                return localize(self.hass, fr, en)
+
+        if self._action_key == "last_error" and value == "none":
+            return localize(self.hass, "Aucune", "None")
+
+        return value
 
     def set_value(self, value: str) -> None:
         """Set and persist a diagnostic text value."""

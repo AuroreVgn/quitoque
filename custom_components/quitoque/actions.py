@@ -11,6 +11,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.util import dt as dt_util
 
 from .calendar_import import async_import_orders
+from .i18n import localize
 from .const import (
     CONF_EVENT_PREFIX,
     CONF_NOTIFY_AFTER_SYNC,
@@ -30,9 +31,9 @@ from .pdf_export import (
 if TYPE_CHECKING:
     from . import QuitoqueConfigEntry
 
-STATUS_SUCCESS = "Succès"
-STATUS_ERROR = "Erreur"
-STATUS_NO_DELIVERY = "Aucune livraison"
+STATUS_SUCCESS = "success"
+STATUS_ERROR = "error"
+STATUS_NO_DELIVERY = "no_delivery"
 
 
 def managed_orders(entry: QuitoqueConfigEntry):
@@ -67,7 +68,7 @@ def _set_status(
     error: str | None = None,
 ) -> None:
     _set_sensor(entry, "last_status", status)
-    _set_sensor(entry, "last_error", error or "Aucune")
+    _set_sensor(entry, "last_error", error or "none")
 
 
 def _set_busy(entry: QuitoqueConfigEntry, value: bool) -> None:
@@ -78,7 +79,13 @@ def _set_busy(entry: QuitoqueConfigEntry, value: bool) -> None:
 
 def _ensure_not_busy(entry: QuitoqueConfigEntry) -> None:
     if entry.runtime_data.coordinator.operation_in_progress:
-        raise HomeAssistantError("Une opération Quitoque est déjà en cours")
+        raise HomeAssistantError(
+            localize(
+                entry.runtime_data.coordinator.hass,
+                "Une opération Quitoque est déjà en cours",
+                "A Quitoque operation is already in progress",
+            )
+        )
 
 
 async def async_refresh(entry: QuitoqueConfigEntry) -> None:
@@ -128,13 +135,23 @@ async def async_sync_calendar(entry: QuitoqueConfigEntry) -> int:
             CONF_NOTIFY_AFTER_SYNC,
             entry.data.get(CONF_NOTIFY_AFTER_SYNC, DEFAULT_NOTIFY_AFTER_SYNC),
         ):
-            persistent_notification.async_create(
-                coordinator.hass,
-                (
+            if localize(coordinator.hass, "fr", "en") == "fr":
+                notification_title = "Synchronisation Quitoque"
+                notification_message = (
                     f"Synchronisation Quitoque terminée : {created} "
                     f"événement(s) créé(s) dans le calendrier."
-                ),
-                title="Synchronisation Quitoque",
+                )
+            else:
+                notification_title = "Quitoque synchronization"
+                notification_message = (
+                    f"Quitoque synchronization complete: {created} "
+                    f"event(s) created in the calendar."
+                )
+
+            persistent_notification.async_create(
+                coordinator.hass,
+                notification_message,
+                title=notification_title,
                 notification_id=f"quitoque_sync_{entry.entry_id}",
             )
 

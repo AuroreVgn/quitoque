@@ -14,6 +14,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .api import QuitoqueAuthenticationError, QuitoqueClient, QuitoqueError
+from .i18n import localize
 from .const import (
     CONF_EVENT_PREFIX,
     CONF_PDF_RETENTION_DAYS,
@@ -94,7 +95,7 @@ class QuitoqueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         max=365,
                         step=1,
                         mode=selector.NumberSelectorMode.BOX,
-                        unit_of_measurement="jours",
+                        unit_of_measurement=localize(self.hass, "jours", "days"),
                     )
                 ),
                 vol.Optional(
@@ -208,7 +209,7 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
                         selector.NumberSelectorConfig(
                             min=0, max=365, step=1,
                             mode=selector.NumberSelectorMode.BOX,
-                            unit_of_measurement="jours",
+                            unit_of_measurement=localize(self.hass, "jours", "days"),
                         )
                     ),
                     vol.Optional(
