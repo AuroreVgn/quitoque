@@ -1,4 +1,4 @@
-# Quitoque pour Home Assistant
+# Quitoque
 
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE)
