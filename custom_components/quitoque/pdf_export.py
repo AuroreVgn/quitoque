@@ -84,6 +84,22 @@ def cleanup_expired_recipe_pdfs(
 
 
 
+def delete_recipes_archive(config_path: str) -> bool:
+    """Delete only the generated Quitoque ZIP archive.
+
+    Individual recipe PDFs are intentionally preserved.
+    Returns True when an archive was deleted.
+    """
+    archive_path = Path(config_path) / "www" / PDF_ARCHIVE_RELATIVE_PATH
+
+    try:
+        archive_path.unlink()
+        return True
+    except FileNotFoundError:
+        return False
+
+
+
 def clear_generated_recipe_files(config_path: str) -> tuple[int, bool]:
     """Immediately delete all generated Quitoque PDFs and the ZIP archive."""
     directory = Path(config_path) / "www" / PDF_DIRECTORY_RELATIVE_PATH

@@ -5,7 +5,6 @@ refresh:
       selector:
         config_entry:
           integration: quitoque
-
 sync_calendar:
   fields:
     config_entry_id:
@@ -13,7 +12,6 @@ sync_calendar:
       selector:
         config_entry:
           integration: quitoque
-
 generate_pdfs:
   fields:
     config_entry_id:
@@ -21,8 +19,14 @@ generate_pdfs:
       selector:
         config_entry:
           integration: quitoque
-
 cleanup_pdfs:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: quitoque
+delete_archive:
   fields:
     config_entry_id:
       required: false

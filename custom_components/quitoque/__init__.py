@@ -15,6 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_time_interval
 
 from .actions import (
+    async_delete_recipes_archive,
     async_cleanup_pdfs,
     async_generate_pdfs,
     async_refresh,
@@ -52,6 +53,7 @@ SERVICE_REFRESH = "refresh"
 SERVICE_SYNC_CALENDAR = "sync_calendar"
 SERVICE_GENERATE_PDFS = "generate_pdfs"
 SERVICE_CLEANUP_PDFS = "cleanup_pdfs"
+SERVICE_DELETE_ARCHIVE = "delete_archive"
 ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 
 
@@ -127,6 +129,10 @@ async def _async_register_services(hass: HomeAssistant) -> None:
         entry = _resolve_service_entry(hass, call)
         return await async_cleanup_pdfs(entry)
 
+    async def handle_delete_archive(call: ServiceCall):
+        entry = _resolve_service_entry(hass, call)
+        return await async_delete_recipes_archive(entry)
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_REFRESH,
@@ -148,6 +154,12 @@ async def _async_register_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_CLEANUP_PDFS,
         handle_cleanup_pdfs,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_ARCHIVE,
+        handle_delete_archive,
         supports_response=SupportsResponse.OPTIONAL,
     )
 

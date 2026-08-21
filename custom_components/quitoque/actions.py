@@ -21,6 +21,7 @@ from .const import (
 from .pdf_export import (
     PDF_ARCHIVE_LOCAL_URL,
     clear_generated_recipe_files,
+    delete_recipes_archive,
     generate_recipe_pdf,
     generate_recipes_archive,
     prepare_pdf_directory,
@@ -264,6 +265,27 @@ async def async_cleanup_pdfs(entry: QuitoqueConfigEntry) -> dict:
             "deleted_pdfs": deleted,
             "archive_deleted": archive_deleted,
         }
+    except Exception as err:
+        _set_status(entry, STATUS_ERROR, str(err))
+        raise
+    finally:
+        _set_busy(entry, False)
+
+
+
+async def async_delete_recipes_archive(entry: QuitoqueConfigEntry) -> dict:
+    """Delete only the generated ZIP archive, keeping individual PDFs."""
+    _ensure_not_busy(entry)
+    _set_busy(entry, True)
+
+    hass = entry.runtime_data.coordinator.hass
+    try:
+        archive_deleted = await hass.async_add_executor_job(
+            delete_recipes_archive,
+            hass.config.config_dir,
+        )
+        _set_status(entry, STATUS_SUCCESS)
+        return {"archive_deleted": archive_deleted}
     except Exception as err:
         _set_status(entry, STATUS_ERROR, str(err))
         raise

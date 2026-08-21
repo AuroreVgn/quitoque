@@ -137,6 +137,16 @@
           "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
         }
       }
+    },
+    "delete_archive": {
+      "name": "Supprimer l’archive ZIP",
+      "description": "Supprime uniquement l’archive ZIP contenant l’ensemble des recettes. Les PDF individuels sont conservés.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
     }
   }
 }

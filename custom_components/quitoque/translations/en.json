@@ -137,6 +137,16 @@
           "description": "Quitoque config entry ID. Optional when only one account is configured."
         }
       }
+    },
+    "delete_archive": {
+      "name": "Delete ZIP archive",
+      "description": "Deletes only the ZIP archive containing all recipes. Individual PDFs are kept.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry",
+          "description": "Quitoque config entry ID. Optional when only one account is configured."
+        }
+      }
     }
   }
 }
