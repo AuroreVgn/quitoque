@@ -222,6 +222,12 @@ Pour supprimer immédiatement les PDF et le ZIP générés :
 action: quitoque.cleanup_pdfs
 ```
 
+Pour supprimer immédiatement  le ZIP générés :
+```yaml
+action: quitoque.delete_archive
+```
+
+
 Avec un seul compte Quitoque, aucun paramètre n'est nécessaire. Si plusieurs comptes sont configurés, renseignez `config_entry_id`.
 
 Les services utilisent exactement les mêmes mécanismes que les boutons : verrouillage pendant l'exécution, gestion de S+2/S+3/S+4, anti-doublon calendrier et mise à jour des capteurs de diagnostic.
