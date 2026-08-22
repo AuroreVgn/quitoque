@@ -12,8 +12,6 @@ Le dashboard affiche les box de **cette semaine jusqu'à S+4**, avec les recette
 
 ## 📸 Aperçu
 
-Ajoutez une capture du dashboard dans le dossier `images` :
-
 ![Dashboard Quitoque](images/dashboard.png)
 
 ---
