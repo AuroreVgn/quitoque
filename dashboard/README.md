@@ -4,6 +4,8 @@ Dashboard Home Assistant dédié à l'intégration **Quitoque**, permettant de v
 
 Le dashboard affiche les box de **cette semaine jusqu'à S+4**, avec les recettes, les dates et créneaux de livraison ainsi que plusieurs actions liées à l'intégration dans une présentation adaptée à un affichage plein écran.
 
+Une variante du dashboard propose l'affichage de l'image pour chaque recette : quitoque-dashboard-with-images.yaml
+
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Dashboard-41BDF5?logo=homeassistant&logoColor=white)
 ![HACS](https://img.shields.io/badge/HACS-Compatible-41BDF5)
 ![Quitoque](https://img.shields.io/badge/Quitoque-Integration-green)																	
