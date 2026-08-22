@@ -17,7 +17,7 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Connexion au compte Quitoque directement depuis le **config flow** Home Assistant.
 - Reconnexion automatique unique lorsque la session web Quitoque expire, avant de déclencher une réauthentification Home Assistant.
 - Détection des **livraisons actives** et exclusion des semaines suspendues.
-- Gestion volontairement limitée aux trois échéances **S+2, S+3 et S+4** : livraisons et recettes dans 2, 3 et 4 semaines.
+- Gestion des cinq échéances **S0 à S+4** : semaine en cours, semaine prochaine, puis les trois semaines suivantes. S0/S+1 proviennent des box commandées ; S+2/S+3/S+4 des prochaines box actives.
 - Nombre de recettes prévu pour chacune de ces trois semaines.
 - Date et créneau horaire de livraison lorsqu'ils sont disponibles.
 - Ajout des recettes dans un calendrier Home Assistant ou un calendrier Google exposé à Home Assistant.
@@ -125,9 +125,16 @@ Renseigner :
 | Calendrier de destination | Calendrier Home Assistant dans lequel créer les événements |
 
 
+
+### S0 et S+1 : box commandées
+
+À partir de la version **1.2.0**, l’intégration complète les prochaines box avec les commandes de la **semaine en cours (S0)** et de la **semaine prochaine (S+1)** présentes dans « Mes box commandées ». L’identifiant Quitoque de la commande est conservé comme clé stable. Une commande peut donc passer de S+2 à S+1 puis S0 sans être recréée comme une nouvelle commande.
+
+La déduplication du calendrier reste fondée sur l’**année ISO + le numéro de semaine**, ce qui évite également les collisions lors du passage S52/S53 → S01 d’une nouvelle année. Si Quitoque expose temporairement la même commande à la fois dans les prochaines box et les box commandées, elle est fusionnée par son identifiant de commande.
+
 ## Calendrier
 
-Le bouton **Ajouter les recettes au calendrier** traite uniquement les box actives des semaines **S+2, S+3 et S+4**. Les autres semaines ne sont volontairement pas gérées.
+Le bouton **Ajouter les recettes au calendrier** traite les box des semaines **S0 à S+4**. Les commandes de S0 et S+1 sont lues dans les box commandées ; S+2 à S+4 restent issues des prochaines box actives.
 
 Pour chaque livraison :
 
@@ -233,7 +240,7 @@ action: quitoque.delete_archive
 
 Avec un seul compte Quitoque, aucun paramètre n'est nécessaire. Si plusieurs comptes sont configurés, renseignez `config_entry_id`.
 
-Les services utilisent exactement les mêmes mécanismes que les boutons : verrouillage pendant l'exécution, gestion de S+2/S+3/S+4, anti-doublon calendrier et mise à jour des capteurs de diagnostic.
+Les services utilisent exactement les mêmes mécanismes que les boutons : verrouillage pendant l'exécution, gestion de S0 à S+4, anti-doublon calendrier et mise à jour des capteurs de diagnostic.
 
 
 
