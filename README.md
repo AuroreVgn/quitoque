@@ -195,6 +195,8 @@ Le dashboard permet également d'accéder rapidement aux actions :
 
 L'affichage est conçu pour s'adapter à la largeur disponible afin de rester utilisable sur différentes tailles d'écran.
 
+Il est disponible [ici](https://github.com/AuroreVgn/quitoque/tree/main/dashboard).
+
 > [!NOTE]
 > Le dashboard est un complément à l'intégration. Les entités Quitoque restent utilisables librement dans n'importe quel autre dashboard Home Assistant.
 
