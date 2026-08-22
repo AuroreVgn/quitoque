@@ -1,6 +1,6 @@
 title: Quitoque
 path: quitoque
-icon: mdi:food-variant
+icon: mdi:food
 panel: true
 cards:
   - type: custom:button-card
@@ -572,7 +572,11 @@ cards:
                       overflow:visible;
                       word-break:break-word;
                     ">
-                      ${r.name}
+                      ${r.name}${r.kitchen_duration_minutes ? `
+                        <span style="opacity:.6; white-space:nowrap;">
+                          (${r.kitchen_duration_minutes} min)
+                        </span>
+                      ` : ''}
                     </div>
                   </div>
                 `).join('')
@@ -734,3 +738,4 @@ cards:
             </div>
           `;
         ]]]
+type: panel
