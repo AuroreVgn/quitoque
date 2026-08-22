@@ -202,7 +202,7 @@ L'affichage est conçu pour s'adapter à la largeur disponible afin de rester ut
 
 Une carte Lovelace dédiée, **Quitoque Card**, est également disponible pour afficher les informations Quitoque directement dans un tableau de bord Home Assistant.
 
-METTRE LIEN
+Elle est disponible [ici](https://github.com/AuroreVgn/quitoque_card).
 
 ## Calendrier
 
