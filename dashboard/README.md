@@ -28,7 +28,7 @@ Le dashboard permet de visualiser en un coup d'œil :
 - 📅 la date de chaque livraison
 - 🕐 le créneau horaire de livraison lorsqu'il est disponible
 - 🍽️ le nombre de recettes de chaque semaine
-- 🥘 la liste des recettes
+- 🥘 la liste des recettes et leur durée
 - 📊 le nombre total de recettes disponibles
 - 📦 le nombre de box prévues
 - 🔄 la date de la dernière synchronisation du calendrier
