@@ -480,6 +480,7 @@ cards:
             const recipesEntity = w.recipes;
 
             const recipes = recipesEntity?.attributes?.recipes || [];
+            const recipeDetails = recipesEntity?.attributes?.recipe_details || [];
             const count = parseInt(recipesEntity?.state || 0) || 0;
 
             const active =
@@ -524,8 +525,12 @@ cards:
               ? `${String(start).padStart(2,'0')}h00 - ${String(end).padStart(2,'0')}h00`
               : '';
 
-            const recipesHtml = recipes.length
-              ? recipes.map(r => `
+            const recipeItems = recipeDetails.length
+              ? recipeDetails
+              : recipes.map(name => ({ name, kitchen_duration_minutes: null }));
+
+            const recipesHtml = recipeItems.length
+              ? recipeItems.map(r => `
                   <div style="
                     padding:9px 11px;
                     border-radius:10px;
@@ -558,7 +563,11 @@ cards:
                         overflow:visible;
                         word-break:break-word;
                       ">
-                        ${r}
+                        ${r.name}${r.kitchen_duration_minutes ? `
+                          <span style="opacity:.6; white-space:nowrap;">
+                            (${r.kitchen_duration_minutes} min)
+                          </span>
+                        ` : ''}
                       </div>
                     </div>
                   </div>
