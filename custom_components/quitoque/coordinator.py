@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.config_entries import ConfigEntryAuthFailed
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import QuitoqueAuthenticationError, QuitoqueClient, QuitoqueError
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
@@ -26,6 +28,9 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
         self.client = client
         self.orders: tuple[QuitoqueOrder, ...] = ()
         self.operation_in_progress = False
+        self.last_successful_login: datetime | None = None
+        self.last_auto_reconnect: datetime | None = None
+        self.client.set_auth_event_callback(self._handle_auth_event)
 
     async def _async_update_data(self) -> QuitoqueOrder | None:
         try:

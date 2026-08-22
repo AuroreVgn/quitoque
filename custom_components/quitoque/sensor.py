@@ -27,6 +27,8 @@ async def async_setup_entry(
             QuitoqueWeekRecipeCountSensor(entry, 4),
             QuitoqueLastActionSensor(entry, "last_calendar_sync"),
             QuitoqueLastActionSensor(entry, "last_pdf_generation"),
+            QuitoqueLastActionSensor(entry, "last_successful_login"),
+            QuitoqueLastActionSensor(entry, "last_auto_reconnect"),
             QuitoqueLastTextSensor(entry, "last_status", "never"),
             QuitoqueLastTextSensor(entry, "last_error", "none"),
         ]
@@ -167,6 +169,13 @@ class QuitoqueLastActionSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
                 self._attr_native_value = datetime.fromisoformat(last_state.state)
             except ValueError:
                 self._attr_native_value = None
+
+        coordinator_value = getattr(self.coordinator, self._action_key, None)
+        if coordinator_value is not None and (
+            self._attr_native_value is None
+            or coordinator_value > self._attr_native_value
+        ):
+            self._attr_native_value = coordinator_value
 
         registry = self.hass.data.setdefault("quitoque_action_sensors", {})
         registry[(self._entry.entry_id, self._action_key)] = self

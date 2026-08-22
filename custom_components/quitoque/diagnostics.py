@@ -22,5 +22,18 @@ async def async_get_config_entry_diagnostics(
     return {
         "entry": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
+        "authentication": {
+            "session_authenticated": entry.runtime_data.coordinator.client._authenticated,
+            "last_successful_login": (
+                entry.runtime_data.coordinator.last_successful_login.isoformat()
+                if entry.runtime_data.coordinator.last_successful_login is not None
+                else None
+            ),
+            "last_auto_reconnect": (
+                entry.runtime_data.coordinator.last_auto_reconnect.isoformat()
+                if entry.runtime_data.coordinator.last_auto_reconnect is not None
+                else None
+            ),
+        },
         "order": asdict(order) if order is not None else None,
     }

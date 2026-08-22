@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import json
 import logging
 import re
@@ -989,6 +990,28 @@ class QuitoqueClient:
         self._password = password
         self._configured_recipes_url = recipes_url.strip() if recipes_url else None
         self._authenticated = False
+        self._auth_event_callback: Callable[[str], None] | None = None
+
+    def set_auth_event_callback(
+        self,
+        callback: Callable[[str], None] | None,
+    ) -> None:
+        """Register a callback for successful login/relogin events."""
+        self._auth_event_callback = callback
+
+    def _emit_auth_event(self, event: str) -> None:
+        """Emit an authentication event without coupling the API to HA."""
+        if self._auth_event_callback is not None:
+            self._auth_event_callback(event)
+
+    async def _async_auto_reconnect(self) -> None:
+        """Perform one automatic reauthentication attempt."""
+        _LOGGER.info(
+            "Session Quitoque expirée : tentative de reconnexion automatique"
+        )
+        self._authenticated = False
+        await self.async_login(auto_reconnect=True)
+        _LOGGER.info("Reconnexion automatique Quitoque réussie")
 
     async def async_get_order(self) -> QuitoqueOrder | None:
         """Return the next active Quitoque order."""
@@ -996,10 +1019,26 @@ class QuitoqueClient:
         return orders[0] if orders else None
 
     async def async_get_orders(self) -> tuple[QuitoqueOrder, ...]:
-        """Return all active future Quitoque orders visible on the dashboard."""
+        """Return all active future Quitoque orders.
+
+        A normal web-session expiration is handled transparently: the client
+        logs in again once and replays the complete request. Only a failed
+        fresh login is surfaced as an authentication error to Home Assistant.
+        """
         if not self._authenticated:
             await self.async_login()
 
+        try:
+            return await self._async_get_orders_authenticated()
+        except QuitoqueAuthenticationError:
+            await self._async_auto_reconnect()
+            # Exactly one retry: never loop on invalid credentials/site changes.
+            return await self._async_get_orders_authenticated()
+
+    async def _async_get_orders_authenticated(
+        self,
+    ) -> tuple[QuitoqueOrder, ...]:
+        """Return active orders using the current authenticated session."""
         if self._configured_recipes_url:
             recipes_urls = (self._configured_recipes_url,)
         else:
@@ -1026,17 +1065,13 @@ class QuitoqueClient:
 
         if self._looks_like_login_page(html, final_url):
             self._authenticated = False
-            await self.async_login()
-            html, final_url = await self._async_get_text(recipes_url)
-
-        if self._looks_like_login_page(html, final_url):
             raise QuitoqueAuthenticationError(
-                "La session Quitoque n'a pas pu être établie"
+                "La session Quitoque a expiré"
             )
 
         return self._parse_order(html, recipes_url)
 
-    async def async_login(self) -> None:
+    async def async_login(self, *, auto_reconnect: bool = False) -> None:
         """Authenticate using Quitoque's exact HTML form and CSRF token."""
         # Chrome already sends the client-side "login=1" cookie when requesting
         # /login. Set it BEFORE fetching the login page so the PHP session and
@@ -1188,72 +1223,95 @@ class QuitoqueClient:
         )
 
         self._authenticated = True
+        self._emit_auth_event("login_success")
+        if auto_reconnect:
+            self._emit_auth_event("auto_reconnect")
 
     async def async_get_recipe_details(
         self,
         recipe: QuitoqueRecipe,
     ) -> QuitoqueRecipeDetails:
-        """Fetch and parse the complete preparation flow of one recipe."""
+        """Fetch and parse a recipe, transparently refreshing an expired session."""
         if not recipe.detail_url:
             raise QuitoqueParseError(
                 f"URL détaillée introuvable pour la recette {recipe.name}"
             )
 
-        headers = self._headers()
-        headers.update(
-            {
-                "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
-                "Referer": DASHBOARD_URL,
-            }
-        )
-
-        try:
-            async with self._session.get(
-                recipe.detail_url,
-                headers=headers,
-                allow_redirects=True,
-                timeout=30,
-            ) as response:
-                response.raise_for_status()
-                html = await response.text(errors="replace")
-                final_url = str(response.url)
-        except ClientResponseError as err:
-            raise QuitoqueError(
-                f"Erreur HTTP Quitoque pour la recette : {err.status}"
-            ) from err
-        except (ClientError, TimeoutError) as err:
-            raise QuitoqueError(
-                f"Impossible de récupérer la recette {recipe.name}"
-            ) from err
-
-        if self._looks_like_login_page(html, final_url):
-            self._authenticated = False
+        if not self._authenticated:
             await self.async_login()
-            return await self.async_get_recipe_details(recipe)
 
-        steps = _extract_recipe_steps(html)
-        image_url = _extract_recipe_image_url(html, final_url)
-        ingredients, kitchen_ingredients, equipment, servings = _extract_recipe_structured_data(html)
-        if not steps:
-            raise QuitoqueParseError(
-                f"Déroulé introuvable pour la recette {recipe.name}"
+        for attempt in range(2):
+            headers = self._headers()
+            headers.update(
+                {
+                    "Accept": (
+                        "text/html,application/xhtml+xml,"
+                        "application/json;q=0.9,*/*;q=0.8"
+                    ),
+                    "Referer": DASHBOARD_URL,
+                }
             )
 
-        _LOGGER.debug(
-            "Déroulé Quitoque extrait : recette=%s étapes=%s",
-            recipe.name,
-            len(steps),
-        )
-        return QuitoqueRecipeDetails(
-            name=recipe.name,
-            duration_minutes=recipe.duration_minutes,
-            source_url=recipe.detail_url,
-            image_url=image_url,
-            steps=steps,
-            ingredients=ingredients,
-            kitchen_ingredients=kitchen_ingredients,
-            equipment=equipment,
-            servings=servings,
+            try:
+                async with self._session.get(
+                    recipe.detail_url,
+                    headers=headers,
+                    allow_redirects=True,
+                    timeout=30,
+                ) as response:
+                    response.raise_for_status()
+                    html = await response.text(errors="replace")
+                    final_url = str(response.url)
+            except ClientResponseError as err:
+                raise QuitoqueError(
+                    f"Erreur HTTP Quitoque pour la recette : {err.status}"
+                ) from err
+            except (ClientError, TimeoutError) as err:
+                raise QuitoqueError(
+                    f"Impossible de récupérer la recette {recipe.name}"
+                ) from err
+
+            if self._looks_like_login_page(html, final_url):
+                self._authenticated = False
+                if attempt == 0:
+                    await self._async_auto_reconnect()
+                    continue
+                raise QuitoqueAuthenticationError(
+                    "La session Quitoque a expiré après reconnexion"
+                )
+
+            steps = _extract_recipe_steps(html)
+            image_url = _extract_recipe_image_url(html, final_url)
+            (
+                ingredients,
+                kitchen_ingredients,
+                equipment,
+                servings,
+            ) = _extract_recipe_structured_data(html)
+            if not steps:
+                raise QuitoqueParseError(
+                    f"Déroulé introuvable pour la recette {recipe.name}"
+                )
+
+            _LOGGER.debug(
+                "Déroulé Quitoque extrait : recette=%s étapes=%s",
+                recipe.name,
+                len(steps),
+            )
+            return QuitoqueRecipeDetails(
+                name=recipe.name,
+                duration_minutes=recipe.duration_minutes,
+                source_url=recipe.detail_url,
+                image_url=image_url,
+                steps=steps,
+                ingredients=ingredients,
+                kitchen_ingredients=kitchen_ingredients,
+                equipment=equipment,
+                servings=servings,
+            )
+
+        raise QuitoqueAuthenticationError(
+            "La session Quitoque n'a pas pu être rétablie"
         )
 
     async def async_get_image_bytes(self, image_url: str) -> bytes:
@@ -1284,6 +1342,7 @@ class QuitoqueClient:
         """Return recipe URLs for all active future Quitoque boxes."""
         html, final_url = await self._async_get_text(DASHBOARD_URL)
         if self._looks_like_login_page(html, final_url):
+            self._authenticated = False
             raise QuitoqueAuthenticationError("La session Quitoque a expiré")
 
         active_parser = _ActiveWeeksParser()

@@ -83,6 +83,12 @@
       },
       "last_error": {
         "name": "Last error"
+      },
+      "last_successful_login": {
+        "name": "Last successful login"
+      },
+      "last_auto_reconnect": {
+        "name": "Last automatic reconnection"
       }
     },
     "button": {
