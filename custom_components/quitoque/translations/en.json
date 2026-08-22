@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect to Quitoque",
-        "description": "Enter your Quitoque credentials.\n\nThe integration only manages deliveries scheduled in 2, 3 and 4 weeks (W+2, W+3 and W+4). Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, active boxes for W+2 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no active delivery is planned.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
+        "description": "Enter your Quitoque credentials.\n\nThe integration manages deliveries from the current week through 4 weeks ahead (W0 to W+4). W0 and W+1 are read from ordered boxes, while W+2 to W+4 come from active upcoming boxes. Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, boxes from W0 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no delivery is available.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
         "data": {
           "username": "Email address / username",
           "password": "Password",
@@ -45,7 +45,7 @@
           "pdf_retention_days": "PDF retention (days, 0 = never delete)",
           "notify_after_sync": "Notify after synchronization"
         },
-        "description": "The integration only manages deliveries scheduled in 2, 3 and 4 weeks (W+2, W+3 and W+4). Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, active boxes for W+2 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no active delivery is planned.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
+        "description": "The integration manages deliveries from the current week through 4 weeks ahead (W0 to W+4). W0 and W+1 are read from ordered boxes, while W+2 to W+4 come from active upcoming boxes. Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, boxes from W0 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no delivery is available.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
         "data_description": {
           "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar."
         }
@@ -89,6 +89,18 @@
       },
       "last_auto_reconnect": {
         "name": "Last automatic reconnection"
+      },
+      "delivery_week_0": {
+        "name": "Delivery this week"
+      },
+      "delivery_week_1": {
+        "name": "Delivery in 1 week"
+      },
+      "recipe_count_week_0": {
+        "name": "Recipes this week"
+      },
+      "recipe_count_week_1": {
+        "name": "Recipes in 1 week"
       }
     },
     "button": {
@@ -116,7 +128,7 @@
     },
     "sync_calendar": {
       "name": "Add recipes to calendar",
-      "description": "Adds missing recipes and deliveries for W+2, W+3 and W+4 to the calendar.",
+      "description": "Adds recipes and deliveries from W0 through W+4 to the calendar when they are not already present.",
       "fields": {
         "config_entry_id": {
           "name": "Config entry",
@@ -126,7 +138,7 @@
     },
     "generate_pdfs": {
       "name": "Generate PDFs",
-      "description": "Generates recipe PDFs and the ZIP archive for W+2, W+3 and W+4.",
+      "description": "Generates recipe PDFs and the ZIP archive for W0 through W+4.",
       "fields": {
         "config_entry_id": {
           "name": "Config entry",

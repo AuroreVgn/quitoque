@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 import json
 import logging
 import re
 import unicodedata
-from datetime import date
+import zlib
+from datetime import date, timedelta
 from html import unescape
 from html.parser import HTMLParser
 from urllib.parse import urljoin
@@ -112,6 +114,185 @@ class _ActiveWeeksParser(HTMLParser):
             self.active_weeks.add(week)
 
 
+@dataclass(frozen=True, slots=True)
+class _HistoricalOrderCard:
+    """One order card from Quitoque's ordered-box history."""
+
+    order_id: int
+    delivery_date: date
+    details_url: str
+    recipe_names: tuple[str, ...]
+
+
+class _HistoryLinkParser(HTMLParser):
+    """Find the account link leading to ordered boxes/history."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._href: str | None = None
+        self._text_parts: list[str] = []
+        self.urls: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "a":
+            return
+        self._href = dict(attrs).get("href")
+        self._text_parts = []
+
+    def handle_data(self, data: str) -> None:
+        if self._href is not None:
+            self._text_parts.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag != "a" or self._href is None:
+            return
+        text = re.sub(r"\s+", " ", " ".join(self._text_parts)).strip().casefold()
+        if (
+            "box command" in text
+            or "paniers command" in text
+            or "commandes" == text
+            or "historique" in text
+        ):
+            self.urls.append(urljoin(BASE_URL, self._href))
+        self._href = None
+        self._text_parts = []
+
+
+_FRENCH_MONTHS = {
+    "janvier": 1,
+    "février": 2,
+    "fevrier": 2,
+    "mars": 3,
+    "avril": 4,
+    "mai": 5,
+    "juin": 6,
+    "juillet": 7,
+    "août": 8,
+    "aout": 8,
+    "septembre": 9,
+    "octobre": 10,
+    "novembre": 11,
+    "décembre": 12,
+    "decembre": 12,
+}
+
+
+def _parse_french_delivery_date(value: str) -> date | None:
+    """Parse labels such as 'Box du mercredi 26 août 2026'."""
+    text = unescape(value).replace("\xa0", " ").strip().casefold()
+    match = re.search(
+        r"(?P<day>\d{1,2})\s+(?P<month>[a-zàâäéèêëîïôöùûüç]+)\s+(?P<year>\d{4})",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    month = _FRENCH_MONTHS.get(match.group("month").casefold())
+    if month is None:
+        return None
+    try:
+        return date(int(match.group("year")), month, int(match.group("day")))
+    except ValueError:
+        return None
+
+
+class _HistoricalOrdersParser(HTMLParser):
+    """Extract ordered-box cards, IDs, dates and recipe names."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._depth = 0
+        self._card_depth: int | None = None
+        self._date_capture = False
+        self._date_parts: list[str] = []
+        self._delivery_date: date | None = None
+        self._details_url: str | None = None
+        self._recipe_names: list[str] = []
+        self.cards: list[_HistoricalOrderCard] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        if tag == "div":
+            self._depth += 1
+            classes = set((attributes.get("class") or "").split())
+            if self._card_depth is None and {"card", "list-order"}.issubset(classes):
+                self._card_depth = self._depth
+                self._delivery_date = None
+                self._details_url = None
+                self._recipe_names = []
+
+        if self._card_depth is None:
+            return
+
+        modal_url = attributes.get("data-modal-url-param")
+        if modal_url and "/order/" in modal_url and "/details" in modal_url:
+            self._details_url = urljoin(BASE_URL, modal_url)
+
+        if tag == "strong" and self._delivery_date is None:
+            self._date_capture = True
+            self._date_parts = []
+
+        if tag == "img":
+            name = (attributes.get("alt") or "").strip()
+            if name and name not in self._recipe_names:
+                self._recipe_names.append(name)
+
+    def handle_data(self, data: str) -> None:
+        if self._card_depth is not None and self._date_capture:
+            self._date_parts.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._card_depth is not None and tag == "strong" and self._date_capture:
+            parsed = _parse_french_delivery_date(" ".join(self._date_parts))
+            if parsed is not None and self._delivery_date is None:
+                self._delivery_date = parsed
+            self._date_capture = False
+            self._date_parts = []
+
+        if tag == "div":
+            if self._card_depth is not None and self._depth == self._card_depth:
+                self._finish_card()
+            self._depth = max(0, self._depth - 1)
+
+    def _finish_card(self) -> None:
+        if self._delivery_date is not None and self._details_url:
+            match = re.search(r"/order/(?P<order_id>\d+)/details", self._details_url)
+            if match:
+                self.cards.append(
+                    _HistoricalOrderCard(
+                        order_id=int(match.group("order_id")),
+                        delivery_date=self._delivery_date,
+                        details_url=self._details_url,
+                        recipe_names=tuple(self._recipe_names),
+                    )
+                )
+        self._card_depth = None
+        self._delivery_date = None
+        self._details_url = None
+        self._recipe_names = []
+
+
+def _stable_history_recipe_id(order_id: int, recipe_name: str) -> int:
+    """Build a deterministic positive item id for history cards without GTM ids."""
+    return zlib.crc32(f"{order_id}:{recipe_name}".encode("utf-8")) & 0x7FFFFFFF
+
+
+def _extract_delivery_hours(html: str) -> tuple[int | None, int | None]:
+    """Best-effort extraction of a delivery time range from an order recap."""
+    text = _clean_recipe_text(html)
+    patterns = (
+        r"(?:créneau|horaire|livraison)[^\d]{0,80}(\d{1,2})\s*h(?:\s*\d{2})?\s*(?:-|à|–|—)\s*(\d{1,2})\s*h",
+        r"(\d{1,2})\s*h(?:\s*\d{2})?\s*(?:-|à|–|—)\s*(\d{1,2})\s*h",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            start, end = int(match.group(1)), int(match.group(2))
+            if 0 <= start <= 23 and 0 <= end <= 23:
+                return start, end
+    return None, None
+
+
 def _duration_to_minutes(value: str) -> int | None:
     """Convert Quitoque duration labels such as '35 min', '1h' or '1h25'."""
     value = unescape(value).replace("\xa0", " ").strip().lower()
@@ -182,6 +363,30 @@ def _extract_recipe_durations(html: str) -> dict[int, int]:
                 durations[item_id] = minutes
 
     return durations
+
+
+def _extract_recipe_page_duration(html: str) -> int | None:
+    """Extract the preparation duration from a public Quitoque recipe page."""
+    visible = re.sub(
+        r"<(script|style|noscript)\b[^>]*>.*?</\1>",
+        " ",
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    text = _clean_recipe_text(visible)
+    match = re.search(
+        r"(?P<duration>\d+\s*h(?:\s*\d+)?|\d+\s*min(?:ute)?s?)\s*(?:En cuisine|Préparation)",
+        text,
+        re.IGNORECASE,
+    )
+    if match:
+        return _duration_to_minutes(match.group("duration"))
+    match = re.search(
+        r"(?P<duration>\d+\s*h(?:\s*\d+)?|\d+\s*min(?:ute)?s?)",
+        text[:2500],
+        re.IGNORECASE,
+    )
+    return _duration_to_minutes(match.group("duration")) if match else None
 
 
 def _recipe_slug(name: str) -> str:
@@ -1038,24 +1243,37 @@ class QuitoqueClient:
     async def _async_get_orders_authenticated(
         self,
     ) -> tuple[QuitoqueOrder, ...]:
-        """Return active orders using the current authenticated session."""
+        """Return Quitoque orders from S0 through S+4.
+
+        S0/S+1 are read from the ordered-box history, while S+2/S+3/S+4
+        continue to come from the active planning dashboard. Orders are merged
+        by their stable Quitoque order id so a box can move from S+2 to S0
+        without ever becoming a duplicate.
+        """
         if self._configured_recipes_url:
             recipes_urls = (self._configured_recipes_url,)
         else:
             recipes_urls = await self._async_discover_recipes_urls()
 
-        if not recipes_urls:
-            return ()
+        orders_by_id: dict[int, QuitoqueOrder] = {}
 
-        orders: list[QuitoqueOrder] = []
         for recipes_url in recipes_urls:
             order = await self._async_get_order_from_url(recipes_url)
-            orders.append(order)
+            orders_by_id[order.order_id] = order
 
-        orders.sort(key=lambda order: order.delivery_date)
+        if not self._configured_recipes_url:
+            for order in await self._async_discover_recent_history_orders():
+                # Prefer the fully structured planning-page order when Quitoque
+                # temporarily exposes the same order in both places.
+                orders_by_id.setdefault(order.order_id, order)
+
+        orders = sorted(orders_by_id.values(), key=lambda order: order.delivery_date)
         _LOGGER.debug(
-            "Box Quitoque actives récupérées : %s",
-            [order.delivery_date.isoformat() for order in orders],
+            "Box Quitoque S0 à S+4 récupérées : %s",
+            [
+                f"{order.order_id}:{order.delivery_date.isoformat()}"
+                for order in orders
+            ],
         )
         return tuple(orders)
 
@@ -1300,7 +1518,11 @@ class QuitoqueClient:
             )
             return QuitoqueRecipeDetails(
                 name=recipe.name,
-                duration_minutes=recipe.duration_minutes,
+                duration_minutes=(
+                    recipe.duration_minutes
+                    if recipe.duration_minutes is not None
+                    else _extract_recipe_page_duration(html)
+                ),
                 source_url=recipe.detail_url,
                 image_url=image_url,
                 steps=steps,
@@ -1338,8 +1560,148 @@ class QuitoqueClient:
                 "Impossible de récupérer l'image de la recette"
             ) from err
 
+    async def _async_discover_recent_history_orders(
+        self,
+    ) -> tuple[QuitoqueOrder, ...]:
+        """Return ordered boxes belonging to the current and next week."""
+        dashboard_html, final_url = await self._async_get_text(DASHBOARD_URL)
+        if self._looks_like_login_page(dashboard_html, final_url):
+            self._authenticated = False
+            raise QuitoqueAuthenticationError("La session Quitoque a expiré")
+
+        pages: list[tuple[str, str]] = [(dashboard_html, final_url)]
+        link_parser = _HistoryLinkParser()
+        link_parser.feed(dashboard_html)
+
+        seen_urls = {final_url}
+        discovered_urls = list(link_parser.urls[:3])
+        if not discovered_urls:
+            discovered_urls.extend(
+                urljoin(BASE_URL, path)
+                for path in (
+                    "/mes-box-commandees",
+                    "/mes-commandes",
+                    "/commandes",
+                    "/orders",
+                    "/compte/commandes",
+                )
+            )
+
+        for url in discovered_urls:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            try:
+                html, page_url = await self._async_get_text(url)
+            except QuitoqueError:
+                _LOGGER.debug("Route historique Quitoque ignorée : %s", url)
+                continue
+            if self._looks_like_login_page(html, page_url):
+                self._authenticated = False
+                raise QuitoqueAuthenticationError("La session Quitoque a expiré")
+            probe = _HistoricalOrdersParser()
+            probe.feed(html)
+            if probe.cards:
+                pages.append((html, page_url))
+                break
+
+        today = date.today()
+        current_monday = today - timedelta(days=today.weekday())
+        range_end = current_monday + timedelta(weeks=2)
+
+        cards_by_id: dict[int, _HistoricalOrderCard] = {}
+        for html, _ in pages:
+            parser = _HistoricalOrdersParser()
+            parser.feed(html)
+            for card in parser.cards:
+                if current_monday <= card.delivery_date < range_end:
+                    cards_by_id[card.order_id] = card
+
+        if not cards_by_id:
+            _LOGGER.debug("Aucune box Quitoque S0/S+1 détectée dans l'historique")
+            return ()
+
+        orders: list[QuitoqueOrder] = []
+        for card in sorted(cards_by_id.values(), key=lambda item: item.delivery_date):
+            orders.append(await self._async_history_card_to_order(card))
+
+        _LOGGER.debug(
+            "Box Quitoque historiques S0/S+1 détectées : %s",
+            [f"{order.order_id}:{order.delivery_date.isoformat()}" for order in orders],
+        )
+        return tuple(orders)
+
+    async def _async_history_card_to_order(
+        self,
+        card: _HistoricalOrderCard,
+    ) -> QuitoqueOrder:
+        """Build an order from a history card and its recap when available."""
+        recap_html = ""
+        try:
+            recap_html, final_url = await self._async_get_text(card.details_url)
+            if self._looks_like_login_page(recap_html, final_url):
+                self._authenticated = False
+                raise QuitoqueAuthenticationError("La session Quitoque a expiré")
+
+            try:
+                parsed = self._parse_order(recap_html, card.details_url)
+            except QuitoqueParseError:
+                parsed = None
+            if parsed is not None:
+                return parsed
+        except QuitoqueAuthenticationError:
+            raise
+        except QuitoqueError:
+            _LOGGER.debug(
+                "Récapitulatif Quitoque indisponible pour la commande %s",
+                card.order_id,
+                exc_info=True,
+            )
+
+        recipe_names_list = list(card.recipe_names)
+        if recap_html:
+            for name in re.findall(
+                r'<img[^>]+alt=["\']([^"\']+)["\']',
+                recap_html,
+                re.I,
+            ):
+                cleaned_name = unescape(name).strip()
+                if cleaned_name and cleaned_name not in recipe_names_list:
+                    recipe_names_list.append(cleaned_name)
+        recipe_names = tuple(recipe_names_list)
+
+        recipes = tuple(
+            QuitoqueRecipe(
+                item_id=_stable_history_recipe_id(card.order_id, name),
+                name=name,
+                category="recipe",
+                quantity=1,
+                duration_minutes=None,
+                detail_url=urljoin(BASE_URL, f"/recettes/{_recipe_slug(name)}"),
+            )
+            for name in recipe_names
+        )
+        if not recipes:
+            raise QuitoqueParseError(
+                f"Aucune recette trouvée pour la commande Quitoque {card.order_id}"
+            )
+
+        start_hour, end_hour = (
+            _extract_delivery_hours(recap_html)
+            if recap_html
+            else (None, None)
+        )
+        return QuitoqueOrder(
+            order_id=card.order_id,
+            delivery_date=card.delivery_date,
+            delivery_start_hour=start_hour,
+            delivery_end_hour=end_hour,
+            recipes_url=card.details_url,
+            recipes=recipes,
+        )
+
     async def _async_discover_recipes_urls(self) -> tuple[str, ...]:
-        """Return recipe URLs for all active future Quitoque boxes."""
+        """Return recipe URLs for active planned Quitoque boxes."""
         html, final_url = await self._async_get_text(DASHBOARD_URL)
         if self._looks_like_login_page(html, final_url):
             self._authenticated = False

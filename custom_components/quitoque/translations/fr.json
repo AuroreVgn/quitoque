@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connexion à Quitoque",
-        "description": "Saisissez vos identifiants Quitoque.\n\nL’intégration gère uniquement les livraisons prévues dans 2, 3 et 4 semaines (S+2, S+3 et S+4). Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box actives des semaines S+2 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
+        "description": "Saisissez vos identifiants Quitoque.\n\nL’intégration gère les livraisons de la semaine en cours à 4 semaines (S0 à S+4). S0 et S+1 sont récupérées depuis les box commandées, tandis que S+2 à S+4 proviennent des prochaines box actives. Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box des semaines S0 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
         "data": {
           "username": "Adresse e-mail / identifiant",
           "password": "Mot de passe",
@@ -45,7 +45,7 @@
           "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
           "notify_after_sync": "Notifier après la synchronisation"
         },
-        "description": "L’intégration gère uniquement les livraisons prévues dans 2, 3 et 4 semaines (S+2, S+3 et S+4). Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box actives des semaines S+2 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
+        "description": "L’intégration gère les livraisons de la semaine en cours à 4 semaines (S0 à S+4). S0 et S+1 sont récupérées depuis les box commandées, tandis que S+2 à S+4 proviennent des prochaines box actives. Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box des semaines S0 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
         "data_description": {
           "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé."
         }
@@ -89,6 +89,18 @@
       },
       "last_auto_reconnect": {
         "name": "Dernière reconnexion automatique"
+      },
+      "delivery_week_0": {
+        "name": "Livraison cette semaine"
+      },
+      "delivery_week_1": {
+        "name": "Livraison dans 1 semaine"
+      },
+      "recipe_count_week_0": {
+        "name": "Nombre de recettes cette semaine"
+      },
+      "recipe_count_week_1": {
+        "name": "Nombre de recettes dans 1 semaine"
       }
     },
     "button": {
@@ -116,7 +128,7 @@
     },
     "sync_calendar": {
       "name": "Ajouter les recettes au calendrier",
-      "description": "Ajoute au calendrier les recettes et livraisons des semaines S+2, S+3 et S+4 qui ne sont pas encore présentes.",
+      "description": "Ajoute au calendrier les recettes et livraisons des semaines S0 à S+4 qui ne sont pas encore présentes.",
       "fields": {
         "config_entry_id": {
           "name": "Entrée de configuration",
@@ -126,7 +138,7 @@
     },
     "generate_pdfs": {
       "name": "Générer les PDF",
-      "description": "Génère les PDF et l’archive ZIP des recettes des semaines S+2, S+3 et S+4.",
+      "description": "Génère les PDF et l’archive ZIP des recettes des semaines S0 à S+4.",
       "fields": {
         "config_entry_id": {
           "name": "Entrée de configuration",

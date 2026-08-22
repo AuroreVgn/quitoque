@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 import time
 from typing import TYPE_CHECKING
@@ -37,17 +38,22 @@ STATUS_ERROR = "error"
 STATUS_NO_DELIVERY = "no_delivery"
 
 
-def managed_orders(entry: QuitoqueConfigEntry):
-    """Return only the orders belonging to S+2, S+3 and S+4."""
-    today = date.today()
+def _managed_orders_for_date(orders, today: date):
+    """Return orders from the current week (S0) through S+4."""
     current_monday = today - timedelta(days=today.weekday())
-    start = current_monday + timedelta(weeks=2)
     end = current_monday + timedelta(weeks=5)
-
     return tuple(
         order
-        for order in entry.runtime_data.coordinator.orders
-        if start <= order.delivery_date < end
+        for order in orders
+        if current_monday <= order.delivery_date < end
+    )
+
+
+def managed_orders(entry: QuitoqueConfigEntry):
+    """Return managed Quitoque orders from S0 through S+4."""
+    return _managed_orders_for_date(
+        entry.runtime_data.coordinator.orders,
+        date.today(),
     )
 
 
@@ -103,8 +109,30 @@ async def async_refresh(entry: QuitoqueConfigEntry) -> None:
         _set_busy(entry, False)
 
 
+async def _async_enrich_missing_durations(coordinator, orders):
+    """Resolve missing history-card durations before calendar import."""
+    enriched_orders = []
+    for order in orders:
+        recipes = []
+        for recipe in order.recipes:
+            if recipe.duration_minutes is not None:
+                recipes.append(recipe)
+                continue
+            try:
+                details = await coordinator.client.async_get_recipe_details(recipe)
+                recipes.append(
+                    replace(recipe, duration_minutes=details.duration_minutes)
+                    if details.duration_minutes is not None
+                    else recipe
+                )
+            except Exception:
+                recipes.append(recipe)
+        enriched_orders.append(replace(order, recipes=tuple(recipes)))
+    return tuple(enriched_orders)
+
+
 async def async_sync_calendar(entry: QuitoqueConfigEntry) -> int:
-    """Refresh and import S+2/S+3/S+4 into the target calendar."""
+    """Refresh and import S0 through S+4 into the target calendar."""
     _ensure_not_busy(entry)
     _set_busy(entry, True)
     try:
@@ -115,6 +143,8 @@ async def async_sync_calendar(entry: QuitoqueConfigEntry) -> int:
         if not orders:
             _set_status(entry, STATUS_NO_DELIVERY)
             return 0
+
+        orders = await _async_enrich_missing_durations(coordinator, orders)
 
         created = await async_import_orders(
             coordinator.hass,
@@ -165,7 +195,7 @@ async def async_sync_calendar(entry: QuitoqueConfigEntry) -> int:
 
 
 async def async_generate_pdfs(entry: QuitoqueConfigEntry) -> dict:
-    """Generate PDFs and the ZIP archive for S+2/S+3/S+4."""
+    """Generate PDFs and the ZIP archive for S0 through S+4."""
     _ensure_not_busy(entry)
     _set_busy(entry, True)
 

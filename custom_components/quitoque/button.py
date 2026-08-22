@@ -50,7 +50,7 @@ class QuitoqueRefreshButton(QuitoqueEntity, ButtonEntity):
 
 
 class QuitoqueSyncButton(QuitoqueEntity, ButtonEntity):
-    """Import S+2/S+3/S+4 recipes into the calendar."""
+    """Import S0 through S+4 recipes into the calendar."""
 
     _attr_translation_key = "sync_calendar"
     _attr_icon = "mdi:calendar-import"
@@ -72,7 +72,7 @@ class QuitoqueSyncButton(QuitoqueEntity, ButtonEntity):
 
 
 class QuitoquePdfButton(QuitoqueEntity, ButtonEntity):
-    """Generate printable PDFs for S+2/S+3/S+4 recipes."""
+    """Generate printable PDFs for S0 through S+4 recipes."""
 
     _attr_translation_key = "export_pdf"
     _attr_icon = "mdi:file-pdf-box"

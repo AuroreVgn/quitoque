@@ -26,11 +26,39 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
             config_entry=entry,
         )
         self.client = client
+        self._entry = entry
         self.orders: tuple[QuitoqueOrder, ...] = ()
         self.operation_in_progress = False
         self.last_successful_login: datetime | None = None
         self.last_auto_reconnect: datetime | None = None
         self.client.set_auth_event_callback(self._handle_auth_event)
+
+    def _handle_auth_event(self, event: str) -> None:
+        """Record successful Quitoque authentication events.
+
+        The API client calls this synchronously after a successful login.
+        Values are kept in the coordinator until the diagnostic entities are
+        loaded, then written to their RestoreEntity sensors.
+        """
+        now = dt_util.utcnow()
+
+        if event == "login_success":
+            self.last_successful_login = now
+            action_key = "last_successful_login"
+        elif event == "auto_reconnect":
+            self.last_auto_reconnect = now
+            action_key = "last_auto_reconnect"
+        else:
+            return
+
+        sensor = self.hass.data.get("quitoque_action_sensors", {}).get(
+            (self._entry.entry_id, action_key)
+        )
+        if sensor is not None:
+            sensor.set_value(now)
+
+        # Refresh entities that may expose coordinator-backed diagnostics.
+        self.async_update_listeners()
 
     async def _async_update_data(self) -> QuitoqueOrder | None:
         try:

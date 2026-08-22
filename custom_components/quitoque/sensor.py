@@ -19,9 +19,13 @@ async def async_setup_entry(
 ) -> None:
     async_add_entities(
         [
+            QuitoqueWeekDeliverySensor(entry, 0),
+            QuitoqueWeekDeliverySensor(entry, 1),
             QuitoqueWeekDeliverySensor(entry, 2),
             QuitoqueWeekDeliverySensor(entry, 3),
             QuitoqueWeekDeliverySensor(entry, 4),
+            QuitoqueWeekRecipeCountSensor(entry, 0),
+            QuitoqueWeekRecipeCountSensor(entry, 1),
             QuitoqueWeekRecipeCountSensor(entry, 2),
             QuitoqueWeekRecipeCountSensor(entry, 3),
             QuitoqueWeekRecipeCountSensor(entry, 4),
@@ -53,7 +57,7 @@ def _order_for_week(coordinator, week_offset: int):
 
 
 class QuitoqueWeekDeliverySensor(QuitoqueEntity, SensorEntity):
-    """Delivery date for one of the next three calendar weeks."""
+    """Delivery date for one managed calendar week (S0 through S+4)."""
 
     _attr_icon = "mdi:truck-delivery"
 
@@ -106,7 +110,7 @@ class QuitoqueWeekDeliverySensor(QuitoqueEntity, SensorEntity):
 
 
 class QuitoqueWeekRecipeCountSensor(QuitoqueEntity, SensorEntity):
-    """Recipe count for one of the next three calendar weeks."""
+    """Recipe count for one managed calendar week (S0 through S+4)."""
 
     _attr_icon = "mdi:food-variant"
     @property
