@@ -15,6 +15,7 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 ## ✨ Fonctionnalités
 
 - Connexion au compte Quitoque directement depuis le **config flow** Home Assistant.
+- Reconnexion automatique unique lorsque la session web Quitoque expire, avant de déclencher une réauthentification Home Assistant.
 - Détection des **livraisons actives** et exclusion des semaines suspendues.
 - Gestion volontairement limitée aux trois échéances **S+2, S+3 et S+4** : livraisons et recettes dans 2, 3 et 4 semaines.
 - Nombre de recettes prévu pour chacune de ces trois semaines.
@@ -32,7 +33,7 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Téléchargement individuel des PDF ou de l'ensemble dans une archive ZIP.
 - Suppression automatique des PDF après un délai configurable.
 - Verrouillage temporaire des boutons pendant une actualisation, une synchronisation ou une génération PDF.
-- Quatre entités de **diagnostic persistantes** mémorisent la dernière synchronisation du calendrier, la dernière génération des PDF, le résultat de la dernière action et la dernière erreur, y compris après un redémarrage de Home Assistant.
+- Six entités de **diagnostic persistantes** mémorisent la dernière synchronisation du calendrier, la dernière génération des PDF, la dernière connexion réussie, la dernière reconnexion automatique, le résultat de la dernière action et la dernière erreur, y compris après un redémarrage de Home Assistant.
 - Interface disponible en **français et anglais**.
 
 ## Entités créées
@@ -49,10 +50,12 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 | Nombre de recettes dans 4 semaines | Nombre de recettes de la box correspondante, `0` si aucune box active |
 | Dernière synchronisation du calendrier | Date et heure de la dernière synchronisation réussie ; valeur conservée après redémarrage |
 | Dernière génération des PDF | Date et heure de la dernière génération PDF réussie ; valeur conservée après redémarrage |
+| Dernière connexion réussie | Date et heure de la dernière authentification Quitoque réussie ; valeur conservée après redémarrage |
+| Dernière reconnexion automatique | Date et heure de la dernière reconnexion automatique après expiration de session ; valeur conservée après redémarrage |
 | Résultat de la dernière action Quitoque | Résultat de la dernière action Quitoque (`Succès`, `Erreur` ou `Aucune livraison`) ; valeur conservée après redémarrage |
 | Dernière erreur | Dernier message d’erreur enregistré, ou `Aucune` ; valeur conservée après redémarrage |
 
-Les quatre entités de suivi d’action — dernière synchronisation, dernière génération PDF, résultat de la dernière action et dernière erreur — sont classées dans la catégorie **Diagnostic** de l’appareil.
+Les six entités de suivi — dernière synchronisation, dernière génération PDF, dernière connexion réussie, dernière reconnexion automatique, résultat de la dernière action et dernière erreur — sont classées dans la catégorie **Diagnostic** de l’appareil.
 
 Les capteurs de livraison exposent également des attributs utiles tels que le numéro de semaine ISO, l'année ISO, le début et la fin de semaine, le créneau de livraison et l'identifiant de commande lorsqu'ils sont disponibles.
 
@@ -235,6 +238,20 @@ Les services utilisent exactement les mêmes mécanismes que les boutons : verro
 
 
 ## Dépannage
+
+
+### Reconnexion automatique
+
+Quitoque utilise une session web qui peut expirer après plusieurs heures. À partir de la version **1.1.0**, une expiration normale de session ne déclenche plus immédiatement une demande de réauthentification Home Assistant.
+
+L’intégration tente automatiquement **une seule reconnexion** avec les identifiants déjà enregistrés, récupère un nouveau jeton CSRF puis rejoue la requête interrompue.
+
+- si la reconnexion réussit, l’intégration continue sans intervention ;
+- si la reconnexion échoue (mot de passe modifié, compte refusé ou mécanisme de connexion Quitoque modifié), le flux standard de **réauthentification Home Assistant** est conservé ;
+- aucune boucle de connexion n’est effectuée : une seule tentative automatique est autorisée par requête.
+
+Les diagnostics **Dernière connexion réussie** et **Dernière reconnexion automatique** permettent de vérifier le fonctionnement de ce mécanisme.
+
 
 Pour activer les journaux détaillés :
 
