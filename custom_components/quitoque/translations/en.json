@@ -91,13 +91,13 @@
         "name": "Last automatic reconnection"
       },
       "delivery_week_0": {
-        "name": "Delivery in 0 weeks"
+        "name": "Delivery this week"
       },
       "delivery_week_1": {
         "name": "Delivery in 1 week"
       },
       "recipe_count_week_0": {
-        "name": "Recipes in 0 weeks"
+        "name": "Recipes this week"
       },
       "recipe_count_week_1": {
         "name": "Recipes in 1 week"

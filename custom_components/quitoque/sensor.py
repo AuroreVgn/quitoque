@@ -15,7 +15,9 @@ from .i18n import localize
 
 
 async def async_setup_entry(
-    hass, entry: QuitoqueConfigEntry, async_add_entities: AddEntitiesCallback
+    hass,
+    entry: QuitoqueConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     async_add_entities(
         [
@@ -110,9 +112,10 @@ class QuitoqueWeekDeliverySensor(QuitoqueEntity, SensorEntity):
 
 
 class QuitoqueWeekRecipeCountSensor(QuitoqueEntity, SensorEntity):
-    """Recipe count for one managed calendar week (S0 through S+4)."""
+    """Recipe count and metadata for one managed week (S0 through S+4)."""
 
     _attr_icon = "mdi:food-variant"
+
     @property
     def native_unit_of_measurement(self) -> str:
         """Return the localized recipe unit."""
@@ -134,19 +137,52 @@ class QuitoqueWeekRecipeCountSensor(QuitoqueEntity, SensorEntity):
         monday, sunday = _week_bounds(self._week_offset)
         order = _order_for_week(self.coordinator, self._week_offset)
         iso = monday.isocalendar()
+
+        if order is None:
+            return {
+                "week": iso.week,
+                "iso_year": iso.year,
+                "week_start": monday.isoformat(),
+                "week_end": sunday.isoformat(),
+                "delivery_date": None,
+                "recipes": [],
+                "recipe_details": [],
+            }
+
+        recipe_details = []
+        for recipe in order.recipes:
+            metadata = self.coordinator.recipe_metadata.get(
+                (order.order_id, recipe.item_id),
+                {},
+            )
+
+            recipe_details.append(
+                {
+                    "name": recipe.name,
+                    "kitchen_duration_minutes": metadata.get(
+                        "kitchen_duration_minutes",
+                        recipe.duration_minutes,
+                    ),
+                    # Backwards compatibility for Quitoque Card <= 0.3.0.
+                    "duration_minutes": metadata.get(
+                        "kitchen_duration_minutes",
+                        recipe.duration_minutes,
+                    ),
+                    "servings": metadata.get("servings"),
+                    "image_url": metadata.get("image_url"),
+                }
+            )
+
         return {
             "week": iso.week,
             "iso_year": iso.year,
             "week_start": monday.isoformat(),
             "week_end": sunday.isoformat(),
-            "delivery_date": (
-                order.delivery_date.isoformat() if order is not None else None
-            ),
-            "recipes": (
-                [recipe.name for recipe in order.recipes]
-                if order is not None
-                else []
-            ),
+            "delivery_date": order.delivery_date.isoformat(),
+            # Backwards compatible attribute used by existing dashboards/cards.
+            "recipes": [recipe.name for recipe in order.recipes],
+            # New rich metadata for Quitoque Card and templates.
+            "recipe_details": recipe_details,
         }
 
 
@@ -168,7 +204,11 @@ class QuitoqueLastActionSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
         """Restore the timestamp after a Home Assistant restart."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
-        if last_state is not None and last_state.state not in ("unknown", "unavailable", "none"):
+        if last_state is not None and last_state.state not in (
+            "unknown",
+            "unavailable",
+            "none",
+        ):
             try:
                 self._attr_native_value = datetime.fromisoformat(last_state.state)
             except ValueError:
@@ -186,7 +226,8 @@ class QuitoqueLastActionSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
 
     async def async_will_remove_from_hass(self) -> None:
         self.hass.data.get("quitoque_action_sensors", {}).pop(
-            (self._entry.entry_id, self._action_key), None
+            (self._entry.entry_id, self._action_key),
+            None,
         )
         await super().async_will_remove_from_hass()
 
@@ -194,7 +235,6 @@ class QuitoqueLastActionSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
         """Set and persist a new action timestamp."""
         self._attr_native_value = value
         self.async_write_ha_state()
-
 
 
 class QuitoqueLastTextSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
@@ -226,7 +266,6 @@ class QuitoqueLastTextSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
         ):
             restored = last_state.state
 
-            # Migrate values stored by earlier releases.
             if self._action_key == "last_status":
                 restored = {
                     "Jamais": "never",
@@ -248,7 +287,8 @@ class QuitoqueLastTextSensor(QuitoqueEntity, SensorEntity, RestoreEntity):
 
     async def async_will_remove_from_hass(self) -> None:
         self.hass.data.get("quitoque_action_sensors", {}).pop(
-            (self._entry.entry_id, self._action_key), None
+            (self._entry.entry_id, self._action_key),
+            None,
         )
         await super().async_will_remove_from_hass()
 

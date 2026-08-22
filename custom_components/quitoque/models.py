@@ -17,6 +17,7 @@ class QuitoqueRecipe:
     price_cents: int | None = None
     duration_minutes: int | None = None
     detail_url: str | None = None
+    image_url: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,7 +30,6 @@ class QuitoqueOrder:
     delivery_end_hour: int | None
     recipes_url: str
     recipes: tuple[QuitoqueRecipe, ...]
-
 
 
 @dataclass(frozen=True, slots=True)
