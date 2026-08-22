@@ -536,7 +536,7 @@ cards:
                     border-radius:10px;
                     background:rgba(120,120,120,.07);
                     min-width:0;
-                    text-align:center;
+                    text-align:left;
                   ">
                     <div style="
                       display:inline-flex;
