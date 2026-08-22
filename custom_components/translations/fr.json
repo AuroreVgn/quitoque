@@ -1,0 +1,170 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion à Quitoque",
+        "description": "Saisissez vos identifiants Quitoque.\n\nL’intégration gère les livraisons de la semaine en cours à 4 semaines (S0 à S+4). S0 et S+1 sont récupérées depuis les box commandées, tandis que S+2 à S+4 proviennent des prochaines box actives. Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box des semaines S0 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
+        "data": {
+          "username": "Adresse e-mail / identifiant",
+          "password": "Mot de passe",
+          "recipes_url": "URL de la page des recettes (facultatif)",
+          "target_calendar": "Calendrier de destination",
+          "event_prefix": "Préfixe personnalisé des événements (facultatif)",
+          "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
+          "notify_after_sync": "Notifier après la synchronisation"
+        },
+        "data_description": {
+          "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Se reconnecter à Quitoque",
+        "description": "La connexion Quitoque a expiré ou les identifiants ont changé.",
+        "data": {
+          "username": "Adresse e-mail / identifiant",
+          "password": "Mot de passe"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Identifiant, mot de passe ou session Quitoque invalide.",
+      "cannot_connect": "Impossible de se connecter à Quitoque ou de lire la prochaine box. Consultez les journaux de l’intégration Quitoque."
+    },
+    "abort": {
+      "already_configured": "Ce compte Quitoque est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Quitoque",
+        "data": {
+          "recipes_url": "URL de la page des recettes (vide = détection automatique)",
+          "target_calendar": "Calendrier de destination",
+          "event_prefix": "Préfixe personnalisé des événements (facultatif)",
+          "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
+          "notify_after_sync": "Notifier après la synchronisation"
+        },
+        "description": "L’intégration gère les livraisons de la semaine en cours à 4 semaines (S0 à S+4). S0 et S+1 sont récupérées depuis les box commandées, tandis que S+2 à S+4 proviennent des prochaines box actives. Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box des semaines S0 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
+        "data_description": {
+          "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "delivery_week_2": {
+        "name": "Livraison dans 2 semaines"
+      },
+      "delivery_week_3": {
+        "name": "Livraison dans 3 semaines"
+      },
+      "delivery_week_4": {
+        "name": "Livraison dans 4 semaines"
+      },
+      "recipe_count_week_2": {
+        "name": "Nombre de recettes dans 2 semaines"
+      },
+      "recipe_count_week_3": {
+        "name": "Nombre de recettes dans 3 semaines"
+      },
+      "recipe_count_week_4": {
+        "name": "Nombre de recettes dans 4 semaines"
+      },
+      "last_calendar_sync": {
+        "name": "Dernière synchronisation du calendrier"
+      },
+      "last_pdf_generation": {
+        "name": "Dernière génération des PDF"
+      },
+      "last_status": {
+        "name": "Résultat de la dernière action Quitoque"
+      },
+      "last_error": {
+        "name": "Dernière erreur"
+      },
+      "last_successful_login": {
+        "name": "Dernière connexion réussie"
+      },
+      "last_auto_reconnect": {
+        "name": "Dernière reconnexion automatique"
+      },
+      "delivery_week_0": {
+        "name": "Livraison cette semaine"
+      },
+      "delivery_week_1": {
+        "name": "Livraison dans 1 semaine"
+      },
+      "recipe_count_week_0": {
+        "name": "Nombre de recettes cette semaine"
+      },
+      "recipe_count_week_1": {
+        "name": "Nombre de recettes dans 1 semaine"
+      }
+    },
+    "button": {
+      "sync_calendar": {
+        "name": "Ajouter les recettes au calendrier"
+      },
+      "refresh": {
+        "name": "Actualiser"
+      },
+      "export_pdf": {
+        "name": "Générer et télécharger les PDF"
+      }
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Actualiser",
+      "description": "Actualise immédiatement les données Quitoque.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
+    },
+    "sync_calendar": {
+      "name": "Ajouter les recettes au calendrier",
+      "description": "Ajoute au calendrier les recettes et livraisons des semaines S0 à S+4 qui ne sont pas encore présentes.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
+    },
+    "generate_pdfs": {
+      "name": "Générer les PDF",
+      "description": "Génère les PDF et l’archive ZIP des recettes des semaines S0 à S+4.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
+    },
+    "cleanup_pdfs": {
+      "name": "Nettoyer les PDF",
+      "description": "Supprime immédiatement tous les PDF Quitoque générés et l’archive ZIP.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
+    },
+    "delete_archive": {
+      "name": "Supprimer l’archive ZIP",
+      "description": "Supprime uniquement l’archive ZIP contenant l’ensemble des recettes. Les PDF individuels sont conservés.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Identifiant de l’entrée Quitoque. Facultatif si un seul compte est configuré."
+        }
+      }
+    }
+  }
+}
