@@ -6,8 +6,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://hacs.xyz/)
 [![Maintainer](https://img.shields.io/badge/Maintainer-AuroreVgn-blue.svg?style=flat-square)](https://github.com/AuroreVgn)
 
-
-Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de les ajouter à un calendrier Home Assistant (ou Google) et de générer les fiches recettes en PDF.
+Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de suivre les livraisons de **S0 à S+4**, de les ajouter à un calendrier Home Assistant (ou Google), de générer les fiches recettes en PDF et d'afficher les informations dans un **dashboard dédié** ou une **carte Lovelace Quitoque**.
 
 > [!IMPORTANT]
 > Cette intégration est un projet communautaire non officiel. Elle n'est ni développée, ni maintenue, ni supportée par Quitoque.
@@ -17,13 +16,19 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Connexion au compte Quitoque directement depuis le **config flow** Home Assistant.
 - Reconnexion automatique unique lorsque la session web Quitoque expire, avant de déclencher une réauthentification Home Assistant.
 - Détection des **livraisons actives** et exclusion des semaines suspendues.
-- Gestion des cinq échéances **S0 à S+4** : semaine en cours, semaine prochaine, puis les trois semaines suivantes. S0/S+1 proviennent des box commandées ; S+2/S+3/S+4 des prochaines box actives.
-- Nombre de recettes prévu pour chacune de ces trois semaines.
+- Gestion des cinq échéances **S0 à S+4** : semaine en cours, semaine prochaine, puis les trois semaines suivantes.
+- S0/S+1 proviennent des **box commandées** ; S+2/S+3/S+4 des prochaines box actives.
+- Nombre de recettes prévu pour chacune des cinq semaines.
 - Date et créneau horaire de livraison lorsqu'ils sont disponibles.
+- Récupération des métadonnées de recettes utilisées dans Home Assistant :
+  - image de la recett
+  - temps en cuisine
+  - nombre de portions
+- Cache persistant des métadonnées afin d'éviter de recharger inutilement les mêmes informations après un redémarrage de Home Assistant.
 - Ajout des recettes dans un calendrier Home Assistant ou un calendrier Google exposé à Home Assistant.
 - Création d'un événement **journée entière** pour la livraison.
 - Création d'événements recette d'une heure entre **08:00 et 11:00**.
-- Titre des recettes sous la forme `PRÉFIXE Sn° - Nom de la recette` avec `Sn°` correspond au numéro de la semaine.
+- Titre des recettes sous la forme `PRÉFIXE Sn° - Nom de la recette` avec `Sn°` correspondant au numéro de la semaine.
 - Préfixe d'événement personnalisable.
 - Anti-doublon basé sur **l'année + le numéro de semaine**, même si les événements ont ensuite été déplacés dans le calendrier.
 - Import de plusieurs semaines en une seule synchronisation.
@@ -34,6 +39,8 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Suppression automatique des PDF après un délai configurable.
 - Verrouillage temporaire des boutons pendant une actualisation, une synchronisation ou une génération PDF.
 - Six entités de **diagnostic persistantes** mémorisent la dernière synchronisation du calendrier, la dernière génération des PDF, la dernière connexion réussie, la dernière reconnexion automatique, le résultat de la dernière action et la dernière erreur, y compris après un redémarrage de Home Assistant.
+- **Dashboard Quitoque** permettant de consulter les prochaines livraisons et d'accéder rapidement aux principales actions.
+- **Carte Lovelace Quitoque Card** avec affichage des recettes, images, temps en cuisine, portions et plusieurs modes de présentation.
 - Interface disponible en **français et anglais**.
 
 ## Entités créées
@@ -42,12 +49,16 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 
 | Entité | Description |
 | --- | --- |
+| Livraison cette semaine | Date de la livraison de S0, sinon `Non` |
+| Livraison dans 1 semaine | Date de la livraison de S+1, sinon `Non` |
 | Livraison dans 2 semaines | Date de la livraison active prévue dans deux semaines, sinon `Non` |
 | Livraison dans 3 semaines | Date de la livraison active prévue dans trois semaines, sinon `Non` |
 | Livraison dans 4 semaines | Date de la livraison active prévue dans quatre semaines, sinon `Non` |
-| Nombre de recettes dans 2 semaines | Nombre de recettes de la box correspondante, `0` si aucune box active |
-| Nombre de recettes dans 3 semaines | Nombre de recettes de la box correspondante, `0` si aucune box active |
-| Nombre de recettes dans 4 semaines | Nombre de recettes de la box correspondante, `0` si aucune box active |
+| Nombre de recettes cette semaine | Nombre de recettes de S0, `0` si aucune box |
+| Nombre de recettes dans 1 semaine | Nombre de recettes de S+1, `0` si aucune box |
+| Nombre de recettes dans 2 semaines | Nombre de recettes de S+2, `0` si aucune box active |
+| Nombre de recettes dans 3 semaines | Nombre de recettes de S+3, `0` si aucune box active |
+| Nombre de recettes dans 4 semaines | Nombre de recettes de S+4, `0` si aucune box active |
 | Dernière synchronisation du calendrier | Date et heure de la dernière synchronisation réussie ; valeur conservée après redémarrage |
 | Dernière génération des PDF | Date et heure de la dernière génération PDF réussie ; valeur conservée après redémarrage |
 | Dernière connexion réussie | Date et heure de la dernière authentification Quitoque réussie ; valeur conservée après redémarrage |
@@ -57,7 +68,38 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 
 Les six entités de suivi — dernière synchronisation, dernière génération PDF, dernière connexion réussie, dernière reconnexion automatique, résultat de la dernière action et dernière erreur — sont classées dans la catégorie **Diagnostic** de l’appareil.
 
-Les capteurs de livraison exposent également des attributs utiles tels que le numéro de semaine ISO, l'année ISO, le début et la fin de semaine, le créneau de livraison et l'identifiant de commande lorsqu'ils sont disponibles.
+Les capteurs de livraison exposent également des attributs utiles tels que le numéro de semaine, l'année, le début et la fin de semaine, le créneau de livraison et l'identifiant de commande lorsqu'ils sont disponibles.
+
+### Métadonnées des recettes
+
+Les capteurs **Nombre de recettes** exposent également les recettes de la semaine dans leurs attributs.
+
+L'attribut `recipes` fournit une liste simple des noms de recettes et reste disponible pour assurer la compatibilité avec les dashboards et cartes existants.
+
+L'attribut `recipe_details` fournit les informations enrichies utilisées notamment par la carte Lovelace :
+
+```yaml
+recipes:
+  - Bowl d'aubergine, ricotta fouettée à l'aneth
+  - Salade de lentilles au rôti de porc
+
+recipe_details:
+  - name: Bowl d'aubergine, ricotta fouettée à l'aneth
+    kitchen_duration_minutes: 35
+    duration_minutes: 35
+    servings: 2 personnes
+    image_url: https://...
+  - name: Salade de lentilles au rôti de porc
+    kitchen_duration_minutes: 25
+    duration_minutes: 25
+    servings: 2 personnes
+    image_url: https://...
+```
+
+> [!NOTE]
+> Le **temps total** de la recette n'est volontairement pas exposé dans ces métadonnées. Quitoque ne le fournit pas de manière suffisamment homogène selon les différentes pages. L'intégration conserve donc le **temps en cuisine**, qui est la donnée fiable.
+
+Les métadonnées sont mises en cache de manière persistante par Home Assistant. Lors d'un redémarrage, les recettes déjà connues peuvent être restaurées sans refaire l'ensemble des requêtes réseau. Le cache est automatiquement nettoyé lorsque les commandes sortent de la plage S0 à S+4.
 
 ### Boutons
 
@@ -72,9 +114,11 @@ Les capteurs de livraison exposent également des attributs utiles tels que le n
 ### Option A — HACS (recommandé)
 
 #### Automatiquement
+
 [![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=AuroreVgn&repository=quitoque&category=integration)
 
 #### Manuellement
+
 Cette intégration étant un dépôt personnalisé, il faut l'ajouter une première fois dans HACS :
 
 1. Ouvrir **HACS** → **Intégrations**.
@@ -124,13 +168,41 @@ Renseigner :
 | Notification après synchronisation | Facultatif ; affiche une notification Home Assistant avec le nombre d’événements créés |
 | Calendrier de destination | Calendrier Home Assistant dans lequel créer les événements |
 
-
-
 ### S0 et S+1 : box commandées
 
 À partir de la version **1.2.0**, l’intégration complète les prochaines box avec les commandes de la **semaine en cours (S0)** et de la **semaine prochaine (S+1)** présentes dans « Mes box commandées ». L’identifiant Quitoque de la commande est conservé comme clé stable. Une commande peut donc passer de S+2 à S+1 puis S0 sans être recréée comme une nouvelle commande.
 
 La déduplication du calendrier reste fondée sur l’**année ISO + le numéro de semaine**, ce qui évite également les collisions lors du passage S52/S53 → S01 d’une nouvelle année. Si Quitoque expose temporairement la même commande à la fois dans les prochaines box et les box commandées, elle est fusionnée par son identifiant de commande.
+
+## Dashboard Quitoque
+
+Un **dashboard Quitoque** peut être utilisé pour regrouper dans une même vue les informations et commandes principales de l'intégration.
+
+Il permet notamment d'afficher :
+
+- les livraisons des semaines **S0 à S+4**
+- la date de livraison
+- le nombre de recettes de chaque semaine
+- les recettes associées
+- les principales informations remontées par l'intégration
+
+Le dashboard permet également d'accéder rapidement aux actions :
+
+- **Actualiser** les données Quitoque
+- **Ajouter les recettes au calendrier**
+- **Générer les PDF**
+- **Ouvrir un calendrier** à partir d'une URL personnalisable.
+
+L'affichage est conçu pour s'adapter à la largeur disponible afin de rester utilisable sur différentes tailles d'écran.
+
+> [!NOTE]
+> Le dashboard est un complément à l'intégration. Les entités Quitoque restent utilisables librement dans n'importe quel autre dashboard Home Assistant.
+
+## Carte Lovelace — Quitoque Card
+
+Une carte Lovelace dédiée, **Quitoque Card**, est également disponible pour afficher les informations Quitoque directement dans un tableau de bord Home Assistant.
+
+METTRE LIEN
 
 ## Calendrier
 
@@ -138,11 +210,11 @@ Le bouton **Ajouter les recettes au calendrier** traite les box des semaines **S
 
 Pour chaque livraison :
 
-- un événement **journée entière** est créé le jour de la livraison
-- les recettes sont ajoutées sous forme d'événements d'une heure à partir de **08:00**
-- le créneau de livraison est ajouté au texte de l'événement lorsqu'il est disponible
-- le numéro de semaine est conservé dans le titre
-- le préfixe configuré est ajouté avant le numéro de semaine
+- un événement **journée entière** est créé le jour de la livraison ;
+- les recettes sont ajoutées sous forme d'événements d'une heure à partir de **08:00** ;
+- le créneau de livraison est ajouté au texte de l'événement lorsqu'il est disponible ;
+- le numéro de semaine est conservé dans le titre ;
+- le préfixe configuré est ajouté avant le numéro de semaine.
 
 Exemple avec le préfixe `QT` :
 
@@ -182,15 +254,15 @@ Il suffit de sélectionner ce calendrier dans le champ **Calendrier de destinati
 
 Le bouton **Générer et télécharger les PDF** récupère le détail des recettes des prochaines box actives et crée :
 
-- un PDF par recette
-- l'image de la recette lorsqu'elle est disponible
-- une mise en page imprimable de la fiche
-- la durée et le nombre de portions lorsqu'ils sont disponibles
-- les ingrédients fournis **dans votre box** et leurs quantités
-- les éléments **dans votre cuisine** dans une section distincte
-- le **matériel** dans une troisième section distincte
-- le déroulé de la recette étape par étape
-- une archive ZIP regroupant les PDF générés
+- un PDF par recette ;
+- l'image de la recette lorsqu'elle est disponible ;
+- une mise en page imprimable de la fiche ;
+- la durée et le nombre de portions lorsqu'ils sont disponibles ;
+- les ingrédients fournis **dans votre box** et leurs quantités ;
+- les éléments **dans votre cuisine** dans une section distincte ;
+- le **matériel** dans une troisième section distincte ;
+- le déroulé de la recette étape par étape ;
+- une archive ZIP regroupant les PDF générés.
 
 Lors d'une nouvelle génération, l'archive ZIP précédente est remplacée.
 
@@ -204,15 +276,15 @@ Les options peuvent être modifiées depuis :
 
 Il est possible de modifier :
 
-- l'URL de la page des recettes ;
-- le calendrier de destination ;
-- le préfixe des événements ;
-- le délai de conservation des PDF ;
-- l’activation de la notification après synchronisation.
+- l'URL de la page des recettes
+- le calendrier de destination
+- le préfixe des événements
+- le délai de conservation des PDF
+- l’activation de la notification après synchronisation
 
 ## Services Home Assistant
 
-En plus des boutons de l'appareil, l'intégration expose quatre services utilisables dans les scripts et automatisations :
+En plus des boutons de l'appareil, l'intégration expose des services utilisables dans les scripts et automatisations :
 
 ```yaml
 action: quitoque.refresh
@@ -232,20 +304,17 @@ Pour supprimer immédiatement les PDF et le ZIP générés :
 action: quitoque.cleanup_pdfs
 ```
 
-Pour supprimer immédiatement  le ZIP générés :
+Pour supprimer immédiatement le ZIP généré :
+
 ```yaml
 action: quitoque.delete_archive
 ```
-
 
 Avec un seul compte Quitoque, aucun paramètre n'est nécessaire. Si plusieurs comptes sont configurés, renseignez `config_entry_id`.
 
 Les services utilisent exactement les mêmes mécanismes que les boutons : verrouillage pendant l'exécution, gestion de S0 à S+4, anti-doublon calendrier et mise à jour des capteurs de diagnostic.
 
-
-
 ## Dépannage
-
 
 ### Reconnexion automatique
 
@@ -258,7 +327,6 @@ L’intégration tente automatiquement **une seule reconnexion** avec les identi
 - aucune boucle de connexion n’est effectuée : une seule tentative automatique est autorisée par requête.
 
 Les diagnostics **Dernière connexion réussie** et **Dernière reconnexion automatique** permettent de vérifier le fonctionnement de ce mécanisme.
-
 
 Pour activer les journaux détaillés :
 
@@ -286,15 +354,14 @@ Les retours, corrections et propositions d'amélioration sont les bienvenus via 
 
 Lors d'un signalement, pensez à indiquer :
 
-- la version de Home Assistant
-- la version de l'intégration Quitoque
-- le comportement attendu
-- les logs pertinents anonymisés
+- la version de Home Assistant ;
+- la version de l'intégration Quitoque ;
+- le comportement attendu ;
+- les logs pertinents anonymisés.
 
 ## Licence
 
 Projet distribué sous licence [MIT](LICENSE).
-
 
 [releases-shield]: https://img.shields.io/github/v/release/AuroreVgn/quitoque?style=flat-square
 [releases]: https://github.com/AuroreVgn/quitoque/releases
