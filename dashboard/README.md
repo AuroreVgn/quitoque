@@ -12,9 +12,11 @@ Une variante du dashboard propose l'affichage de l'image pour chaque recette : q
 
 ---
 
-## 📸 Aperçu
+## 📸 Aperçu du dashboard sans et avec images
 
 ![Dashboard Quitoque](images/dashboard.png)
+
+![Dashboard Quitoque](images/dashboard_with_images.png)
 
 ---
 
