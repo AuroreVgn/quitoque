@@ -399,7 +399,7 @@ cards:
                     tap_action:
                       action: url
                       url_path: >-
-                        https://calendar.google.com/calendar/embed?src=knvj679h5kj073rdgeo7dt8afo%40group.calendar.google.com&ctz=Europe%2FParis
+                        https://my.home-assistant.io/redirect/calendar
       table: |
         [[[
           const first = (...ids) =>
