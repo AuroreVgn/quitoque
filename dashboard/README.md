@@ -58,11 +58,7 @@ L'intégration doit être installée et configurée avant d'utiliser le dashboar
 
 Le dashboard utilise deux cartes personnalisées :
 
-### Button Card
-
 `custom:button-card`
-
-### Mushroom
 
 `custom:mushroom-template-card`
 
