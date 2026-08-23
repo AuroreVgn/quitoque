@@ -438,36 +438,6 @@ dans le fichier YAML et remplacez l'URL par celle de votre calendrier.
 
 ---
 
-# 📁 Structure conseillée du dépôt
-
-Le dashboard peut être publié directement dans le dépôt de l'intégration Quitoque :
-
-```text
-quitoque/
-│
-├── custom_components/
-│   └── quitoque/
-│       ├── __init__.py
-│       ├── api.py
-│       ├── button.py
-│       ├── sensor.py
-│       └── ...
-│
-├── dashboard/
-│   ├── README.md
-│   ├── quitoque-dashboard.yaml
-│   └── images/
-│       └── dashboard.png
-│
-├── README.md
-├── hacs.json
-└── ...
-```
-
-Le dashboard est **facultatif** : l'intégration Quitoque peut parfaitement être utilisée sans celui-ci.
-
----
-
 # 🤝 Contributions
 
 Les suggestions, améliorations et corrections sont les bienvenues.
