@@ -421,6 +421,65 @@ class _RecipeUrlParser(HTMLParser):
             return
 
 
+def _normalise_recipe_lookup_name(value: str) -> str:
+    """Normalize a recipe name for exact catalog lookup."""
+    value = unescape(value).replace("\xa0", " ")
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    value = value.replace("’", "'").casefold()
+    return re.sub(r"\s+", " ", value).strip()
+
+
+class _PublicRecipeCatalogParser(HTMLParser):
+    """Extract canonical public recipe URLs keyed by their visible name."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._href: str | None = None
+        self._text_parts: list[str] = []
+        self._image_alts: list[str] = []
+        self.urls_by_name: dict[str, str] = {}
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        if tag == "a":
+            href = attributes.get("href") or ""
+            if "/recettes/" in href or "/products/" in href:
+                self._href = urljoin(BASE_URL, href)
+                self._text_parts = []
+                self._image_alts = []
+            return
+
+        if tag == "img" and self._href is not None:
+            alt = (attributes.get("alt") or "").strip()
+            if alt:
+                self._image_alts.append(alt)
+
+    def handle_data(self, data: str) -> None:
+        if self._href is not None:
+            value = data.strip()
+            if value:
+                self._text_parts.append(value)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag != "a" or self._href is None:
+            return
+
+        candidates = [*self._image_alts]
+        visible_text = re.sub(r"\s+", " ", " ".join(self._text_parts)).strip()
+        if visible_text:
+            candidates.append(visible_text)
+
+        for candidate in candidates:
+            key = _normalise_recipe_lookup_name(candidate)
+            if key:
+                self.urls_by_name.setdefault(key, self._href)
+
+        self._href = None
+        self._text_parts = []
+        self._image_alts = []
+
+
 def _clean_recipe_text(value: str) -> str:
     """Normalize text extracted from recipe HTML/JSON."""
     value = re.sub(r"<br\s*/?>", "\n", value, flags=re.IGNORECASE)
@@ -525,7 +584,16 @@ def _extract_recipe_steps(html: str) -> tuple[QuitoqueRecipeStep, ...]:
     """Extract only the actual cooking steps from a Quitoque recipe page."""
     json_steps = _extract_json_ld_recipe_steps(html)
     if json_steps:
-        return json_steps
+        # Some Quitoque product pages expose unrelated numbered content in
+        # JSON-LD before the actual recipe (for example cooking tips numbered
+        # "5"). Only trust JSON-LD when it looks like a real recipe sequence.
+        numbers = [step.number for step in json_steps]
+        if numbers and numbers[0] == 1 and numbers == list(range(1, len(numbers) + 1)):
+            return json_steps
+        _LOGGER.debug(
+            "Étapes JSON-LD Quitoque ignorées car séquence invalide : %s",
+            numbers,
+        )
 
     cleaned = re.sub(
         r"(?i)</(?:p|li|div|h[1-6]|section|article)>",
@@ -573,10 +641,28 @@ def _extract_recipe_steps(html: str) -> tuple[QuitoqueRecipeStep, ...]:
         re.IGNORECASE,
     )
 
+    # Product pages can contain numbered cooking tips or product instructions
+    # before the actual recipe. When Quitoque exposes the "La recette" marker,
+    # ignore everything before it. Otherwise start only at the first step 1.
+    recipe_marker_index: int | None = None
+    for index, line in enumerate(lines):
+        normalized = line.casefold().strip(" :")
+        if normalized in {"la recette", "recette", "préparation", "preparation"}:
+            recipe_marker_index = index + 1
+            break
+
+    candidate_lines = (
+        lines[recipe_marker_index:]
+        if recipe_marker_index is not None
+        else lines
+    )
+
     steps: list[QuitoqueRecipeStep] = []
     current_number: int | None = None
     current_title = ""
     instructions: list[str] = []
+    started = False
+    expected_number = 1
 
     def flush() -> None:
         nonlocal current_number, current_title, instructions
@@ -597,7 +683,7 @@ def _extract_recipe_steps(html: str) -> tuple[QuitoqueRecipeStep, ...]:
         current_title = ""
         instructions = []
 
-    for line in lines:
+    for line in candidate_lines:
         if is_noise(line):
             continue
 
@@ -611,10 +697,24 @@ def _extract_recipe_steps(html: str) -> tuple[QuitoqueRecipeStep, ...]:
         match = step_re.match(line)
         if match:
             number = int(match.group("number"))
-            if 1 <= number <= 20:
+
+            if not started:
+                if number != 1:
+                    # Ignore unrelated numbered content until the recipe starts.
+                    continue
+                started = True
+                expected_number = 1
+
+            if number == expected_number and 1 <= number <= 20:
                 flush()
                 current_number = number
                 current_title = (match.group("title") or "").strip()
+                expected_number += 1
+                continue
+
+            # Once the recipe has started, an unexpected number belongs to
+            # unrelated page content. Do not let it become a bogus recipe step.
+            if started:
                 continue
 
         if current_number is not None:
@@ -1196,6 +1296,7 @@ class QuitoqueClient:
         self._configured_recipes_url = recipes_url.strip() if recipes_url else None
         self._authenticated = False
         self._auth_event_callback: Callable[[str], None] | None = None
+        self._public_recipe_urls: dict[str, str] | None = None
 
     def set_auth_event_callback(
         self,
@@ -1631,6 +1732,68 @@ class QuitoqueClient:
         )
         return tuple(orders)
 
+    async def _async_public_recipe_urls(self) -> dict[str, str]:
+        """Return canonical recipe URLs from Quitoque's public recipe catalog."""
+        if self._public_recipe_urls is not None:
+            return self._public_recipe_urls
+
+        urls: dict[str, str] = {}
+        # S0/S+1 recipes are current recipes and are normally exposed in the
+        # first public catalog pages. Two pages keep the request count small
+        # while covering the current selection with a safe slug fallback below.
+        for page in (1, 2):
+            url = urljoin(BASE_URL, f"/recettes?page={page}")
+            try:
+                html, _ = await self._async_get_text(url)
+            except QuitoqueError:
+                _LOGGER.debug(
+                    "Catalogue public Quitoque indisponible : %s",
+                    url,
+                    exc_info=True,
+                )
+                continue
+
+            parser = _PublicRecipeCatalogParser()
+            parser.feed(html)
+            urls.update(parser.urls_by_name)
+
+        self._public_recipe_urls = urls
+        _LOGGER.debug(
+            "URLs canoniques du catalogue Quitoque indexées : %s",
+            len(urls),
+        )
+        return urls
+
+    async def _async_resolve_history_recipe_urls(
+        self,
+        recipe_names: tuple[str, ...],
+        recap_html: str,
+    ) -> dict[str, str]:
+        """Resolve canonical detail URLs for recipes coming from S0/S+1 history."""
+        resolved: dict[str, str] = {}
+
+        # The order recap sometimes contains normal public recipe links even
+        # when it has no GTM order payload. Prefer those links first.
+        if recap_html:
+            parser = _PublicRecipeCatalogParser()
+            parser.feed(recap_html)
+            resolved.update(parser.urls_by_name)
+
+        missing = [
+            name
+            for name in recipe_names
+            if _normalise_recipe_lookup_name(name) not in resolved
+        ]
+        if missing:
+            catalog_urls = await self._async_public_recipe_urls()
+            for name in missing:
+                key = _normalise_recipe_lookup_name(name)
+                if key in catalog_urls:
+                    resolved[key] = catalog_urls[key]
+
+        return resolved
+
+
     async def _async_history_card_to_order(
         self,
         card: _HistoricalOrderCard,
@@ -1669,6 +1832,10 @@ class QuitoqueClient:
                 if cleaned_name and cleaned_name not in recipe_names_list:
                     recipe_names_list.append(cleaned_name)
         recipe_names = tuple(recipe_names_list)
+        resolved_urls = await self._async_resolve_history_recipe_urls(
+            recipe_names,
+            recap_html,
+        )
 
         recipes = tuple(
             QuitoqueRecipe(
@@ -1677,10 +1844,19 @@ class QuitoqueClient:
                 category="recipe",
                 quantity=1,
                 duration_minutes=None,
-                detail_url=urljoin(BASE_URL, f"/recettes/{_recipe_slug(name)}"),
+                detail_url=(
+                    resolved_urls.get(_normalise_recipe_lookup_name(name))
+                    or urljoin(BASE_URL, f"/recettes/{_recipe_slug(name)}")
+                ),
             )
             for name in recipe_names
         )
+        for recipe in recipes:
+            _LOGGER.debug(
+                "URL recette historique Quitoque : %s -> %s",
+                recipe.name,
+                recipe.detail_url,
+            )
         if not recipes:
             raise QuitoqueParseError(
                 f"Aucune recette trouvée pour la commande Quitoque {card.order_id}"
