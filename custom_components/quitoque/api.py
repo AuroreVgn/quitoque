@@ -234,7 +234,17 @@ class _HistoricalOrdersParser(HTMLParser):
 
         if tag == "img":
             name = (attributes.get("alt") or "").strip()
-            if name and name not in self._recipe_names:
+            src = (attributes.get("src") or attributes.get("data-src") or "").casefold()
+            css_class = (attributes.get("class") or "").casefold()
+
+            # Decorative partnership/chef stickers are not recipe entries.
+            is_decorative_badge = (
+                "highlight-sticker" in css_class
+                or "logo-overlay" in css_class
+                or "sticker" in src
+                or "/logos/" in src
+            )
+            if name and not is_decorative_badge and name not in self._recipe_names:
                 self._recipe_names.append(name)
 
     def handle_data(self, data: str) -> None:
@@ -743,7 +753,9 @@ class _RecipePageMetadataParser(HTMLParser):
             ).lower()
             content = attributes.get("content")
             if key in {"og:image", "twitter:image", "twitter:image:src"} and content:
-                self.image_url = content
+                lowered_content = content.casefold()
+                if "sticker" not in lowered_content and "/logos/" not in lowered_content:
+                    self.image_url = content
                 return
 
         if tag != "img" or self.image_url is not None:
@@ -760,6 +772,15 @@ class _RecipePageMetadataParser(HTMLParser):
         lowered = src.lower()
         css_class = (attributes.get("class") or "").lower()
         alt = (attributes.get("alt") or "").lower()
+
+        # Decorative overlays are not the product/recipe picture.
+        if (
+            "highlight-sticker" in css_class
+            or "logo-overlay" in css_class
+            or "sticker" in lowered
+            or "/logos/" in lowered
+        ):
+            return
 
         if (
             "recipe" in css_class
@@ -1379,7 +1400,12 @@ class QuitoqueClient:
         return tuple(orders)
 
     async def _async_get_order_from_url(self, recipes_url: str) -> QuitoqueOrder:
-        """Fetch and parse one Quitoque order page."""
+        """Fetch and parse one Quitoque order page.
+
+        Quitoque exposes normal recipes on Step 1, while recipe-like ``kit``
+        products live on Step 2 (``/marche``). Fetch both pages so selected
+        kits can be linked to their real ``/products/...`` detail page.
+        """
         html, final_url = await self._async_get_text(recipes_url)
 
         if self._looks_like_login_page(html, final_url):
@@ -1388,7 +1414,37 @@ class QuitoqueClient:
                 "La session Quitoque a expiré"
             )
 
-        return self._parse_order(html, recipes_url)
+        market_html: str | None = None
+        market_url = re.sub(
+            r"/(?:recettes|panier)(?:\\?.*)?$",
+            "/marche",
+            recipes_url,
+        )
+
+        if market_url != recipes_url:
+            try:
+                market_html, market_final_url = await self._async_get_text(market_url)
+                if self._looks_like_login_page(market_html, market_final_url):
+                    self._authenticated = False
+                    raise QuitoqueAuthenticationError(
+                        "La session Quitoque a expiré"
+                    )
+                _LOGGER.debug(
+                    "Page marché Quitoque récupérée : %s",
+                    market_final_url,
+                )
+            except QuitoqueAuthenticationError:
+                raise
+            except QuitoqueError:
+                # A temporary failure of Step 2 must not break normal recipes.
+                _LOGGER.warning(
+                    "Impossible de récupérer la page marché Quitoque : %s",
+                    market_url,
+                    exc_info=True,
+                )
+                market_html = None
+
+        return self._parse_order(html, recipes_url, market_html=market_html)
 
     async def async_login(self, *, auto_reconnect: bool = False) -> None:
         """Authenticate using Quitoque's exact HTML form and CSRF token."""
@@ -1560,6 +1616,7 @@ class QuitoqueClient:
             await self.async_login()
 
         for attempt in range(2):
+
             headers = self._headers()
             headers.update(
                 {
@@ -1581,6 +1638,7 @@ class QuitoqueClient:
                     response.raise_for_status()
                     html = await response.text(errors="replace")
                     final_url = str(response.url)
+                    content_type = response.headers.get("Content-Type", "")
             except ClientResponseError as err:
                 raise QuitoqueError(
                     f"Erreur HTTP Quitoque pour la recette : {err.status}"
@@ -1599,6 +1657,7 @@ class QuitoqueClient:
                     "La session Quitoque a expiré après reconnexion"
                 )
 
+
             steps = _extract_recipe_steps(html)
             image_url = _extract_recipe_image_url(html, final_url)
             (
@@ -1607,6 +1666,8 @@ class QuitoqueClient:
                 equipment,
                 servings,
             ) = _extract_recipe_structured_data(html)
+
+
             if not steps:
                 raise QuitoqueParseError(
                     f"Déroulé introuvable pour la recette {recipe.name}"
@@ -1823,12 +1884,47 @@ class QuitoqueClient:
 
         recipe_names_list = list(card.recipe_names)
         if recap_html:
-            for name in re.findall(
-                r'<img[^>]+alt=["\']([^"\']+)["\']',
-                recap_html,
-                re.I,
-            ):
-                cleaned_name = unescape(name).strip()
+            for image_tag in re.findall(r"<img\\b[^>]*>", recap_html, re.I):
+                alt_match = re.search(
+                    r'alt=["\\\']([^"\\\']+)["\\\']',
+                    image_tag,
+                    re.I,
+                )
+                if not alt_match:
+                    continue
+
+                class_match = re.search(
+                    r'class=["\\\']([^"\\\']*)["\\\']',
+                    image_tag,
+                    re.I,
+                )
+                src_match = re.search(
+                    r'(?:src|data-src)=["\\\']([^"\\\']+)["\\\']',
+                    image_tag,
+                    re.I,
+                )
+
+                css_class = (
+                    unescape(class_match.group(1)).casefold()
+                    if class_match
+                    else ""
+                )
+                src = (
+                    unescape(src_match.group(1)).casefold()
+                    if src_match
+                    else ""
+                )
+
+                is_decorative_badge = (
+                    "highlight-sticker" in css_class
+                    or "logo-overlay" in css_class
+                    or "sticker" in src
+                    or "/logos/" in src
+                )
+                if is_decorative_badge:
+                    continue
+
+                cleaned_name = unescape(alt_match.group(1)).strip()
                 if cleaned_name and cleaned_name not in recipe_names_list:
                     recipe_names_list.append(cleaned_name)
         recipe_names = tuple(recipe_names_list)
@@ -1980,7 +2076,12 @@ class QuitoqueClient:
         )
 
     @staticmethod
-    def _parse_order(html: str, recipes_url: str) -> QuitoqueOrder:
+    def _parse_order(
+        html: str,
+        recipes_url: str,
+        *,
+        market_html: str | None = None,
+    ) -> QuitoqueOrder:
         parser = _GtmDataParser()
         parser.feed(html)
         if not parser.payload:
@@ -1996,21 +2097,70 @@ class QuitoqueClient:
         durations = _extract_recipe_durations(html)
         _LOGGER.debug("Durées Quitoque extraites : %s", durations)
 
+        # Step 1 contains normal recipe links. Step 2 /marche contains the
+        # selected ``kit`` links. Both use the order item id in data-gtm-id on
+        # the card header, so merge both maps before building recipe objects.
         url_parser = _RecipeUrlParser()
         url_parser.feed(html)
+        if market_html:
+            url_parser.feed(market_html)
         detail_urls = url_parser.urls
-        _LOGGER.debug("URLs détaillées Quitoque extraites : %s", detail_urls)
+        _LOGGER.debug(
+            "URLs détaillées Quitoque extraites (recettes + marché) : %s",
+            detail_urls,
+        )
+
+        # Durations for kits are also displayed on the market cards.
+        if market_html:
+            market_durations = _extract_recipe_durations(market_html)
+            durations.update(market_durations)
+
+        # Temporary diagnostic: expose every non recipe/kit item returned by
 
         recipes: list[QuitoqueRecipe] = []
         for item in payload.get("items", []):
             category = str(item.get("item_category", ""))
-            if category not in {"recipe", "kit"}:
+
+            if category not in {"recipe", "kit", "market"}:
                 continue
+
+            # A market item is only a candidate here. The coordinator will
+            # inspect its /products/ page and keep it only when Quitoque
+            # exposes a serving count, which identifies a prepared dish.
+            if category == "market" and not (
+                detail_urls.get(int(item.get("item_id", 0)), "")
+                .find("/products/") >= 0
+            ):
+                continue
+
             try:
+                item_id = int(item["item_id"])
+                item_name = str(item["item_name"])
+                detail_url = detail_urls.get(item_id)
+
+                # Keep the historical /recettes/<slug> fallback for normal
+                # recipes only. Quitoque kit/product URLs contain a numeric
+                # product suffix which cannot be reconstructed from item_id.
+                if detail_url is None and category == "recipe":
+                    detail_url = urljoin(
+                        BASE_URL,
+                        f"/recettes/{_recipe_slug(item_name)}",
+                    )
+
+                if detail_url is None:
+                    _LOGGER.warning(
+                        "URL détaillée Quitoque introuvable pour le kit : "
+                        "id=%s nom=%s",
+                        item_id,
+                        item_name,
+                    )
+
+
+
                 recipes.append(
                     QuitoqueRecipe(
-                        item_id=int(item["item_id"]),
-                        name=str(item["item_name"]),
+                        item_id=item_id,
+                        name=item_name,
                         category=category,
                         quantity=int(item.get("quantity", 1)),
                         price_cents=(
@@ -2018,18 +2168,13 @@ class QuitoqueClient:
                             if item.get("price") is not None
                             else None
                         ),
-                        duration_minutes=durations.get(int(item["item_id"])),
-                        detail_url=(
-                            detail_urls.get(int(item["item_id"]))
-                            or urljoin(
-                                BASE_URL,
-                                f"/recettes/{_recipe_slug(str(item['item_name']))}",
-                            )
-                        ),
+                        duration_minutes=durations.get(item_id),
+                        detail_url=detail_url,
                     )
                 )
             except (KeyError, TypeError, ValueError):
                 _LOGGER.debug("Élément Quitoque ignoré car incomplet : %s", item)
+
 
         if not recipes:
             raise QuitoqueParseError("Aucune recette sélectionnée n'a été trouvée")

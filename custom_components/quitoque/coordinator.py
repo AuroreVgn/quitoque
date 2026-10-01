@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime
 import logging
 from typing import Any
@@ -131,9 +132,12 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
             recipe.name
             for order in orders
             for recipe in order.recipes
-            if not self.recipe_metadata.get(
-                (order.order_id, recipe.item_id), {}
-            ).get("_complete")
+            if (
+                recipe.category in {"kit", "market"}
+                or not self.recipe_metadata.get(
+                    (order.order_id, recipe.item_id), {}
+                ).get("_complete")
+            )
         ]
         catalogue_metadata = await async_resolve_recipe_catalogue_metadata(
             self.client,
@@ -181,8 +185,21 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                 active_keys.add(key)
 
                 cached = self.recipe_metadata.get(key)
-                if cached and cached.get("_complete"):
+                if (
+                    cached
+                    and cached.get("_complete")
+                    and recipe.category not in {"kit", "market"}
+                ):
                     continue
+
+                if recipe.category in {"kit", "market"}:
+                    _LOGGER.debug(
+                        "Métadonnées Quitoque produit : récupération depuis "
+                        "l'URL produit : id=%s nom=%s url=%s",
+                        recipe.item_id,
+                        recipe.name,
+                        recipe.detail_url,
+                    )
 
                 try:
                     history = history_metadata.get(
@@ -194,7 +211,11 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                     # recipe.detail_url. Historical boxes can now recover the
                     # same URL from their history card.
                     product_url = history.get("detail_url")
-                    if not product_url and recipe.detail_url and "/products/" in recipe.detail_url:
+                    if (
+                        not product_url
+                        and recipe.detail_url
+                        and "/products/" in recipe.detail_url
+                    ):
                         product_url = recipe.detail_url
 
                     metadata = await async_get_recipe_card_metadata(
@@ -209,6 +230,20 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                     )
 
                     catalogue = catalogue_metadata.get(recipe.name, {})
+
+                    if recipe.category == "market":
+                        _LOGGER.warning(
+                            "DIAG Quitoque MARKET DISH - résultat : "
+                            "id=%s | nom=%s | portions=%s | image=%s | "
+                            "total=%s | cuisine=%s | url=%s",
+                            recipe.item_id,
+                            recipe.name,
+                            metadata.get("servings"),
+                            bool(metadata.get("image_url")),
+                            metadata.get("total_duration_minutes"),
+                            metadata.get("kitchen_duration_minutes"),
+                            recipe.detail_url,
+                        )
 
                     history_image = history.get("image_url")
                     if not metadata.get("image_url") and history_image:
@@ -258,9 +293,23 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                     bool(metadata.get("image_url")),
                 )
 
-        for key in tuple(self.recipe_metadata):
-            if key not in active_keys:
-                self.recipe_metadata.pop(key, None)
+        # Keep only market products that Quitoque presents as a dish,
+        # identified by a serving count on the product page.
+        filtered_orders: list[QuitoqueOrder] = []
+        for order in orders:
+            filtered_recipes = tuple(
+                recipe
+                for recipe in order.recipes
+                if (
+                    recipe.category != "market"
+                    or self.recipe_metadata.get(
+                        (order.order_id, recipe.item_id), {}
+                    ).get("servings") is not None
+                )
+            )
+            filtered_orders.append(replace(order, recipes=filtered_recipes))
+
+        self.orders = tuple(filtered_orders)
 
         await self._async_save_recipe_cache()
 

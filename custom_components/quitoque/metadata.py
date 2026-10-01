@@ -417,23 +417,29 @@ def _best_recipe_json_ld(html: str, recipe_name: str) -> dict | None:
 
 
 def _servings_from_box_text(html: str) -> str | None:
-    """Extract portions from Quitoque's visible 'Dans votre box' section.
-
-    This is more reliable than recipeYield for account/order recipes because
-    the page can expose generic structured-data yields that do not correspond
-    to the customer's selected box size.
-    """
+    """Extract a generic serving count from visible Quitoque product text."""
     visible = _visible_text(html)
 
     patterns = (
-        r"dans votre box.{0,120}?\b(?P<count>[1-9]|1[0-2])\s*personnes?\b",
-        r"\b(?P<count>[1-9]|1[0-2])\s*personnes?\b.{0,120}?dans votre box",
+        r"dans votre box.{0,160}?\\b(?P<count>\\d{1,2})\\s*"
+        r"(?:personnes?|pers\\.?|portions?)\\b",
+        r"\\b(?P<count>\\d{1,2})\\s*"
+        r"(?:personnes?|pers\\.?|portions?)\\b.{0,160}?dans votre box",
+        r"\\b(?P<count>\\d{1,2})\\s*"
+        r"(?:personnes?|pers\\.?|portions?)\\b",
     )
+
     for pattern in patterns:
         match = re.search(pattern, visible, re.IGNORECASE)
-        if match:
-            count = int(match.group("count"))
-            return f"{count} personne" if count == 1 else f"{count} personnes"
+        if not match:
+            continue
+
+        count = int(match.group("count"))
+        if count <= 0:
+            continue
+
+        return f"{count} personne" if count == 1 else f"{count} personnes"
+
     return None
 
 
