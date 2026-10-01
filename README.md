@@ -234,7 +234,17 @@ Elle est disponible [ici](https://github.com/AuroreVgn/quitoque_card).
 
 ## Calendrier
 
-Le bouton **Ajouter les recettes au calendrier** traite les box des semaines **S0 à S+4**. Les commandes de S0 et S+1 sont lues dans les box commandées ; S+2 à S+4 restent issues des prochaines box actives.
+Le bouton **Ajouter les recettes au calendrier** traite les box des semaines **S0 à S+4**.
+
+Les commandes de S0 et S+1 sont lues dans les box commandées ; S+2 à S+4 restent issues des prochaines box actives.
+
+Les éléments pouvant être ajoutés au calendrier comprennent :
+
+- les recettes classiques ;
+- les kits culinaires du Marché ;
+- les plats cuisinés du Marché identifiés comme tels par leur fiche produit.
+
+Les produits du Marché qui ne correspondent pas à une recette ou à un plat sont automatiquement exclus.
 
 Pour chaque livraison :
 
@@ -280,21 +290,39 @@ Il suffit de sélectionner ce calendrier dans le champ **Calendrier de destinati
 
 ## PDF des recettes
 
-Le bouton **Générer et télécharger les PDF** récupère le détail des recettes des prochaines box actives et crée :
+Le bouton **Générer et télécharger les PDF** récupère le détail des recettes et kits disposant d'une fiche recette exploitable et crée :
 
-- un PDF par recette ;
-- l'image de la recette lorsqu'elle est disponible ;
+- un PDF par recette ou kit ;
+- l'image principale de la recette lorsqu'elle est disponible ;
 - une mise en page imprimable de la fiche ;
-- la durée et le nombre de portions lorsqu'ils sont disponibles ;
+- la durée lorsqu'elle est fournie par Quitoque ;
+- le nombre de portions lorsqu'il est disponible ;
 - les ingrédients fournis **dans votre box** et leurs quantités ;
 - les éléments **dans votre cuisine** dans une section distincte ;
 - le **matériel** dans une troisième section distincte ;
 - le déroulé de la recette étape par étape ;
 - une archive ZIP regroupant les PDF générés.
 
-Lors d'une nouvelle génération, l'archive ZIP précédente est remplacée.
+Les plats cuisinés qui ne disposent pas d'un véritable déroulé de recette restent disponibles dans Home Assistant et dans le calendrier, mais ne sont pas traités comme une fiche recette complète pour la génération PDF.
 
 Le délai de conservation est configurable dans les options de l'intégration. Une valeur de `0` désactive la suppression automatique.
+
+## Recettes et produits du Marché
+
+Quitoque utilise plusieurs catégories de produits dans une même commande.
+
+L'intégration distingue désormais :
+
+| Type | Pris en charge | Image | Portions | Étapes / PDF |
+| --- | --- | --- | --- | --- |
+| Recette classique | ✅ | ✅ | ✅ | ✅ |
+| Kit culinaire du Marché | ✅ | ✅ | ✅ | ✅ |
+| Plat cuisiné du Marché | ✅ | ✅ | ✅ si disponible | Selon la fiche |
+| Produit classique du Marché | ❌ | — | — | — |
+
+Un produit du Marché n'est donc pas automatiquement considéré comme une recette.
+
+Pour les plats cuisinés, l'intégration utilise notamment l'indication de portions présente sur la fiche produit afin de distinguer un véritable plat des autres articles du Marché.
 
 ## Options
 
