@@ -244,7 +244,12 @@ class _HistoricalOrdersParser(HTMLParser):
                 or "sticker" in src
                 or "/logos/" in src
             )
-            if name and not is_decorative_badge and name not in self._recipe_names:
+            if (
+                name
+                and not is_decorative_badge
+                and not _is_promotional_recipe_label(name)
+                and name not in self._recipe_names
+            ):
                 self._recipe_names.append(name)
 
     def handle_data(self, data: str) -> None:
@@ -280,6 +285,24 @@ class _HistoricalOrdersParser(HTMLParser):
         self._delivery_date = None
         self._details_url = None
         self._recipe_names = []
+
+
+def _is_promotional_recipe_label(value: str) -> bool:
+    """Return True for promotional labels that are not actual recipe names."""
+    normalized = re.sub(r"\s+", " ", unescape(value)).strip().casefold()
+    if not normalized:
+        return False
+
+    # Quitoque partnership badges commonly use labels such as
+    # "Recette du chef ...". Keep this generic: no chef/person is hard-coded.
+    promotional_prefixes = (
+        "recette du chef ",
+        "recette de la cheffe ",
+        "recette par le chef ",
+        "recette par la cheffe ",
+        "avec ",
+    )
+    return normalized.startswith(promotional_prefixes)
 
 
 def _stable_history_recipe_id(order_id: int, recipe_name: str) -> int:
@@ -1925,9 +1948,17 @@ class QuitoqueClient:
                     continue
 
                 cleaned_name = unescape(alt_match.group(1)).strip()
-                if cleaned_name and cleaned_name not in recipe_names_list:
+                if (
+                    cleaned_name
+                    and not _is_promotional_recipe_label(cleaned_name)
+                    and cleaned_name not in recipe_names_list
+                ):
                     recipe_names_list.append(cleaned_name)
-        recipe_names = tuple(recipe_names_list)
+        recipe_names = tuple(
+            name
+            for name in dict.fromkeys(recipe_names_list)
+            if not _is_promotional_recipe_label(name)
+        )
         resolved_urls = await self._async_resolve_history_recipe_urls(
             recipe_names,
             recap_html,
