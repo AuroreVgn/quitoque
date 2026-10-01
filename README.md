@@ -20,10 +20,16 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - S0/S+1 proviennent des **box commandées** ; S+2/S+3/S+4 des prochaines box actives.
 - Nombre de recettes prévu pour chacune des cinq semaines.
 - Date et créneau horaire de livraison lorsqu'ils sont disponibles.
-- Récupération des métadonnées de recettes utilisées dans Home Assistant :
-  - image de la recett
-  - temps en cuisine
+- Récupération des métadonnées des recettes et produits culinaires utilisés dans Home Assistant :
+  - image de la recette ou du produit
+  - temps en cuisine lorsqu'il est disponible
   - nombre de portions
+- Prise en charge des **recettes classiques Quitoque**.
+- Prise en charge des **kits culinaires du Marché Quitoque** lorsqu'ils disposent d'une fiche recette complète.
+- Prise en charge des **plats cuisinés du Marché** lorsqu'un nombre de portions est indiqué sur leur fiche produit.
+- Exclusion automatique des produits du Marché qui ne correspondent pas à un plat ou une recette exploitable, par exemple les produits d'épicerie, boulangerie ou autres articles sans indication de portions.
+- Gestion des recettes en partenariat avec un chef sans créer de fausse recette à partir du sticker ou du visuel promotionnel associé.
+- Sélection de l'image principale du plat ou de la recette en ignorant les logos et stickers promotionnels.
 - Cache persistant des métadonnées afin d'éviter de recharger inutilement les mêmes informations après un redémarrage de Home Assistant.
 - Ajout des recettes dans un calendrier Home Assistant ou un calendrier Google exposé à Home Assistant.
 - Création d'un événement **journée entière** pour la livraison.
@@ -76,12 +82,23 @@ Les capteurs **Nombre de recettes** exposent également les recettes de la semai
 
 L'attribut `recipes` fournit une liste simple des noms de recettes et reste disponible pour assurer la compatibilité avec les dashboards et cartes existants.
 
-L'attribut `recipe_details` fournit les informations enrichies utilisées notamment par la carte Lovelace :
+L'attribut `recipe_details` fournit les informations enrichies utilisées notamment par la carte Lovelace.
+
+Les éléments remontés peuvent provenir de plusieurs types de contenu Quitoque :
+
+- recettes classiques ;
+- kits culinaires proposés dans le Marché ;
+- plats cuisinés du Marché lorsqu'ils disposent d'une indication de portions.
+
+Les produits du Marché sans indication permettant de les identifier comme plat ou recette sont ignorés.
+
+Exemple :
 
 ```yaml
 recipes:
   - Bowl d'aubergine, ricotta fouettée à l'aneth
-  - Salade de lentilles au rôti de porc
+  - Soupe de butternut au parmesan et poitrine fumée croustillante
+  - Lasagnes à la bolognaise (1kg)
 
 recipe_details:
   - name: Bowl d'aubergine, ricotta fouettée à l'aneth
@@ -89,17 +106,26 @@ recipe_details:
     duration_minutes: 35
     servings: 2 personnes
     image_url: https://...
-  - name: Salade de lentilles au rôti de porc
-    kitchen_duration_minutes: 25
-    duration_minutes: 25
+
+  - name: Soupe de butternut au parmesan et poitrine fumée croustillante
+    kitchen_duration_minutes: 35
+    duration_minutes: 35
     servings: 2 personnes
+    image_url: https://...
+
+  - name: Lasagnes à la bolognaise (1kg)
+    kitchen_duration_minutes:
+    duration_minutes:
+    servings: 3 personnes
     image_url: https://...
 ```
 
 > [!NOTE]
 > Le **temps total** de la recette n'est volontairement pas exposé dans ces métadonnées. Quitoque ne le fournit pas de manière suffisamment homogène selon les différentes pages. L'intégration conserve donc le **temps en cuisine**, qui est la donnée fiable.
-
-Les métadonnées sont mises en cache de manière persistante par Home Assistant. Lors d'un redémarrage, les recettes déjà connues peuvent être restaurées sans refaire l'ensemble des requêtes réseau. Le cache est automatiquement nettoyé lorsque les commandes sortent de la plage S0 à S+4.
+> 
+> Les métadonnées sont mises en cache de manière persistante par Home Assistant. Lors d'un redémarrage, les recettes déjà connues peuvent être restaurées sans refaire l'ensemble des requêtes réseau. Le cache est automatiquement nettoyé lorsque les commandes sortent de la plage S0 à S+4.
+>
+> Certaines fiches produit, notamment les plats cuisinés, ne fournissent pas de durée de préparation exploitable. Dans ce cas, l'intégration conserve les champs de durée vides mais continue de remonter les autres informations disponibles, notamment le nom, l'image et le nombre de portions.
 
 ### Boutons
 
