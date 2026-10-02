@@ -35,14 +35,15 @@ Chaque semaine possède sa propre couleur afin de faciliter la lecture du tablea
 
 ### Actions disponibles
 
-Quatre boutons sont disponibles dans le bandeau supérieur :
+Cinq boutons sont disponibles dans le bandeau supérieur :
 
 | Bouton | Fonction |
 |---|---|
 | 🔄 **Actualiser** | Récupère immédiatement les dernières données Quitoque |
 | 📅 **Ajouter** | Ajoute au calendrier les nouvelles semaines disponibles |
+| 🗓️ **Accéder** | Ouvre le calendrier Home Assistant ou une URL personnalisée |
 | 📄 **Générer PDF** | Génère les fiches recettes PDF ainsi que l'archive ZIP |
-| 🗓️ **Calendrier** | Ouvre le calendrier Home Assistant ou une URL personnalisée |
+| 📄 **Supprimer** | Supprime les fiches recettes PDF ainsi que l'archive ZIP |
 
 ---
 
