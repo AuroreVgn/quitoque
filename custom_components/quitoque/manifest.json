@@ -13,8 +13,7 @@
   ],
   "version": "1.4.1",
   "requirements": [
-    "reportlab==4.4.9",
-    "Pillow==11.3.0"
+    "reportlab==4.4.9"
   ],
   "issue_tracker": "https://github.com/AuroreVgn/quitoque/issues"
 }
