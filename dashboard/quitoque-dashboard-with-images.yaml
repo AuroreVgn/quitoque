@@ -406,17 +406,19 @@ cards:
                     show_state: false
                     tap_action:
                       action: perform-action
-                      perform_action: button.press
-                      target:
-                        entity_id: |
-                          [[[
-                            const ids = [
-                              'quitoque.delete_archive',
-                              'quitoque.suppression_archive',
-                              'quitoque.supprimer_archive'
-                            ];
-                            return ids.find(id => states[id] !== undefined) || ids[0];
-                          ]]]
+                      perform_action: |
+                        [[[
+                          if (hass.services.quitoque?.cleanup_pdfs) {
+                            return 'quitoque.cleanup_pdfs';
+                          }
+                          if (hass.services.quitoque?.delete_archive) {
+                            return 'quitoque.delete_archive';
+                          }
+                          if (hass.services.quitoque?.suppression_archive) {
+                            return 'quitoque.suppression_archive';
+                          }
+                          return 'quitoque.cleanup_pdfs';
+                        ]]]
                     styles:
                       card:
                         - padding: 0
