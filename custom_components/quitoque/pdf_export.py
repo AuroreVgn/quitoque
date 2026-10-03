@@ -18,6 +18,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
+from PIL import Image as PILImage
+
 from reportlab.platypus import (
     HRFlowable,
     Image,
@@ -37,6 +39,15 @@ PDF_DIRECTORY_LOCAL_URL = "/local/quitoque/recettes"
 PDF_ARCHIVE_RELATIVE_PATH = "quitoque/recettes_quitoque.zip"
 PDF_ARCHIVE_LOCAL_URL = "/local/quitoque/recettes_quitoque.zip"
 
+
+def _optimize_recipe_image(image_bytes: bytes) -> bytes:
+    """Resize and recompress a recipe image before embedding it in a PDF."""
+    with PILImage.open(BytesIO(image_bytes)) as source:
+        image = source.convert("RGB")
+        image.thumbnail((800, 800), PILImage.Resampling.LANCZOS)
+        output = BytesIO()
+        image.save(output, format="JPEG", quality=75, optimize=True)
+        return output.getvalue()
 
 
 
@@ -250,11 +261,18 @@ def generate_recipe_pdf(
     hero_image = ""
     if image_bytes:
         try:
-            reader = ImageReader(BytesIO(image_bytes))
+            optimized_image_bytes = _optimize_recipe_image(image_bytes)
+            optimized_image = BytesIO(optimized_image_bytes)
+            reader = ImageReader(optimized_image)
             width_px, height_px = reader.getSize()
             box_w, box_h = 108 * mm, 69 * mm
             scale = min(box_w / width_px, box_h / height_px)
-            hero_image = Image(BytesIO(image_bytes), width=width_px * scale, height=height_px * scale)
+            optimized_image.seek(0)
+            hero_image = Image(
+                optimized_image,
+                width=width_px * scale,
+                height=height_px * scale,
+            )
             hero_image.hAlign = "LEFT"
         except Exception:
             hero_image = ""
