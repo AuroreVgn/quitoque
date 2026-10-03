@@ -1,4 +1,4 @@
-title: Quitoque
+xtitle: Quitoque
 path: quitoque
 icon: mdi:food
 panel: true
@@ -411,9 +411,9 @@ cards:
                         entity_id: |
                           [[[
                             const ids = [
-                              'button.quitoque.delete_archive',
-                              'button.quitoque.suppression_archive',
-                              'button.quitoque.supprimer_archive'
+                              'quitoque.delete_archive',
+                              'quitoque.suppression_archive',
+                              'quitoque.supprimer_archive'
                             ];
                             return ids.find(id => states[id] !== undefined) || ids[0];
                           ]]]
