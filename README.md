@@ -5,8 +5,20 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.3%2B-41BDF5.svg?style=flat-square&logo=homeassistant)](https://www.home-assistant.io/)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://hacs.xyz/)
 [![Maintainer](https://img.shields.io/badge/Maintainer-AuroreVgn-blue.svg?style=flat-square)](https://github.com/AuroreVgn)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/aurorevgn)
 
+## ☕️ Soutenir le projet
+
+Si cette intégration vous est utile et que vous souhaitez soutenir son développement et sa maintenance :
+
+<p>
+  <a href="https://ko-fi.com/aurorevgn">
+    <img src="https://storage.ko-fi.com/cdn/kofi4.png?v=3"
+         alt="Support me on Ko-fi"
+         height="45">
+  </a>
+</p>
+
+## ⚠️ Important
 Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de suivre les livraisons de **S0 à S+4**, de les ajouter à un calendrier Home Assistant (ou Google), de générer les fiches recettes en PDF et d'afficher les informations dans un **dashboard dédié** ou une **carte Lovelace Quitoque**.
 
 > [!IMPORTANT]
