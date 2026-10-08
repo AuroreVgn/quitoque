@@ -6,22 +6,6 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://hacs.xyz/)
 [![Maintainer](https://img.shields.io/badge/Maintainer-AuroreVgn-blue.svg?style=flat-square)](https://github.com/AuroreVgn)
 
-## 🏠 Mes projets Home Assistant
-
-Retrouvez l'ensemble de mes intégrations et projets Home Assistant sur ma page dédiée : [**🏠 Découvrir mes projets Home Assistant**](https://gentle-suggestion-7c3.notion.site/Mes-projets-Home-Assistant-3eda02eefa8f81a48621c3caeef7fa8e)
-
-## ☕️ Soutenir le projet
-
-Si cette intégration vous est utile et que vous souhaitez soutenir son développement et sa maintenance :
-
-<p>
-  <a href="https://ko-fi.com/aurorevgn">
-    <img src="https://storage.ko-fi.com/cdn/kofi4.png?v=3"
-         alt="Support me on Ko-fi"
-         height="45">
-  </a>
-</p>
-
 ## ⚠️ Important
 Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de suivre les livraisons de **S0 à S+4**, de les ajouter à un calendrier Home Assistant (ou Google), de générer les fiches recettes en PDF et d'afficher les informations dans un **dashboard dédié** ou une **carte Lovelace Quitoque**.
 
@@ -65,6 +49,77 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - **Dashboard Quitoque** permettant de consulter les prochaines livraisons et d'accéder rapidement aux principales actions.
 - **Carte Lovelace Quitoque Card** avec affichage des recettes, images, temps en cuisine, portions et plusieurs modes de présentation.
 - Interface disponible en **français et anglais**.
+
+## Compatibilité
+
+**Cette intégration dépend de l'interface web de Quitoque. Une modification du site peut donc nécessiter une mise à jour de l'intégration.**
+
+Si une page ou une donnée n'est plus détectée, ouvrez une issue en fournissant les journaux **sans donnée d'authentification**.
+
+## Installation
+
+### Option A — HACS (recommandé)
+
+#### Automatiquement
+
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=AuroreVgn&repository=quitoque&category=integration)
+
+#### Manuellement
+
+Cette intégration étant un dépôt personnalisé, il faut l'ajouter une première fois dans HACS :
+
+1. Ouvrir **HACS** → **Intégrations**.
+2. Ouvrir le menu **⋮** → **Dépôts personnalisés**.
+3. Ajouter :
+
+   ```text
+   https://github.com/AuroreVgn/quitoque
+   ```
+
+4. Choisir la catégorie **Intégration**.
+5. Rechercher **Quitoque** dans HACS puis installer l'intégration.
+6. Redémarrer Home Assistant.
+
+### Option B — Installation manuelle
+
+1. Télécharger la dernière version du dépôt.
+2. Copier le dossier :
+
+   ```text
+   custom_components/quitoque
+   ```
+
+   dans :
+
+   ```text
+   /config/custom_components/quitoque
+   ```
+
+3. Redémarrer Home Assistant.
+
+## Configuration
+
+Après l'installation :
+
+**Paramètres → Appareils et services → Ajouter une intégration → Quitoque**
+
+Renseigner :
+
+| Paramètre | Description |
+| --- | --- |
+| Adresse e-mail / identifiant | Identifiant utilisé sur Quitoque |
+| Mot de passe | Mot de passe Quitoque |
+| URL de la page des recettes | Facultatif ; laisser vide pour la détection automatique |
+| Préfixe personnalisé | Facultatif, par exemple `QT` |
+| Conservation des PDF | Nombre de jours avant suppression ; `0` = ne jamais supprimer |
+| Notification après synchronisation | Facultatif ; affiche une notification Home Assistant avec le nombre d’événements créés |
+| Calendrier de destination | Calendrier Home Assistant dans lequel créer les événements |
+
+### S0 et S+1 : box commandées
+
+À partir de la version **1.2.0**, l’intégration complète les prochaines box avec les commandes de la **semaine en cours (S0)** et de la **semaine prochaine (S+1)** présentes dans « Mes box commandées ». L’identifiant Quitoque de la commande est conservé comme clé stable. Une commande peut donc passer de S+2 à S+1 puis S0 sans être recréée comme une nouvelle commande.
+
+La déduplication du calendrier reste fondée sur l’**année ISO + le numéro de semaine**, ce qui évite également les collisions lors du passage S52/S53 → S01 d’une nouvelle année. Si Quitoque expose temporairement la même commande à la fois dans les prochaines box et les box commandées, elle est fusionnée par son identifiant de commande.
 
 ## Entités créées
 
@@ -151,71 +206,6 @@ recipe_details:
 | **Actualiser** | Interroge immédiatement Quitoque sans recharger l'intégration |
 | **Ajouter les recettes au calendrier** | Ajoute les semaines actives absentes du calendrier |
 | **Générer et télécharger les PDF** | Génère les fiches recettes et l'archive ZIP |
-
-## Installation
-
-### Option A — HACS (recommandé)
-
-#### Automatiquement
-
-[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=AuroreVgn&repository=quitoque&category=integration)
-
-#### Manuellement
-
-Cette intégration étant un dépôt personnalisé, il faut l'ajouter une première fois dans HACS :
-
-1. Ouvrir **HACS** → **Intégrations**.
-2. Ouvrir le menu **⋮** → **Dépôts personnalisés**.
-3. Ajouter :
-
-   ```text
-   https://github.com/AuroreVgn/quitoque
-   ```
-
-4. Choisir la catégorie **Intégration**.
-5. Rechercher **Quitoque** dans HACS puis installer l'intégration.
-6. Redémarrer Home Assistant.
-
-### Option B — Installation manuelle
-
-1. Télécharger la dernière version du dépôt.
-2. Copier le dossier :
-
-   ```text
-   custom_components/quitoque
-   ```
-
-   dans :
-
-   ```text
-   /config/custom_components/quitoque
-   ```
-
-3. Redémarrer Home Assistant.
-
-## Configuration
-
-Après l'installation :
-
-**Paramètres → Appareils et services → Ajouter une intégration → Quitoque**
-
-Renseigner :
-
-| Paramètre | Description |
-| --- | --- |
-| Adresse e-mail / identifiant | Identifiant utilisé sur Quitoque |
-| Mot de passe | Mot de passe Quitoque |
-| URL de la page des recettes | Facultatif ; laisser vide pour la détection automatique |
-| Préfixe personnalisé | Facultatif, par exemple `QT` |
-| Conservation des PDF | Nombre de jours avant suppression ; `0` = ne jamais supprimer |
-| Notification après synchronisation | Facultatif ; affiche une notification Home Assistant avec le nombre d’événements créés |
-| Calendrier de destination | Calendrier Home Assistant dans lequel créer les événements |
-
-### S0 et S+1 : box commandées
-
-À partir de la version **1.2.0**, l’intégration complète les prochaines box avec les commandes de la **semaine en cours (S0)** et de la **semaine prochaine (S+1)** présentes dans « Mes box commandées ». L’identifiant Quitoque de la commande est conservé comme clé stable. Une commande peut donc passer de S+2 à S+1 puis S0 sans être recréée comme une nouvelle commande.
-
-La déduplication du calendrier reste fondée sur l’**année ISO + le numéro de semaine**, ce qui évite également les collisions lors du passage S52/S53 → S01 d’une nouvelle année. Si Quitoque expose temporairement la même commande à la fois dans les prochaines box et les box commandées, elle est fusionnée par son identifiant de commande.
 
 ## Dashboard Quitoque
 
@@ -415,12 +405,6 @@ Après redémarrage, les messages sont disponibles dans **Paramètres → Systè
 > [!WARNING]
 > Ne publiez jamais vos cookies de session, votre mot de passe ou un jeton CSRF dans une issue GitHub.
 
-## Compatibilité
-
-**Cette intégration dépend de l'interface web de Quitoque. Une modification du site peut donc nécessiter une mise à jour de l'intégration.**
-
-Si une page ou une donnée n'est plus détectée, ouvrez une issue en fournissant les journaux **sans donnée d'authentification**.
-
 ## Contributions et problèmes
 
 Les retours, corrections et propositions d'amélioration sont les bienvenus via les [issues GitHub](https://github.com/AuroreVgn/quitoque/issues).
@@ -432,6 +416,18 @@ Lors d'un signalement, pensez à indiquer :
 - le comportement attendu ;
 - les logs pertinents anonymisés.
 
+## ☕️ Soutenir le projet
+
+Si cette intégration vous est utile et que vous souhaitez soutenir son développement et sa maintenance :
+
+<p>
+  <a href="https://ko-fi.com/aurorevgn">
+    <img src="https://storage.ko-fi.com/cdn/kofi4.png?v=3"
+         alt="Support me on Ko-fi"
+         height="45">
+  </a>
+</p>
+
 ## Licence
 
 Projet distribué sous licence [MIT](LICENSE).
@@ -439,3 +435,7 @@ Projet distribué sous licence [MIT](LICENSE).
 [releases-shield]: https://img.shields.io/github/v/release/AuroreVgn/quitoque?style=flat-square
 [releases]: https://github.com/AuroreVgn/quitoque/releases
 [license-shield]: https://img.shields.io/github/license/AuroreVgn/quitoque?style=flat-square
+
+## 🏠 Mes projets Home Assistant
+
+Retrouvez l'ensemble de mes intégrations et projets Home Assistant sur ma page dédiée : [**🏠 Découvrir mes projets Home Assistant**](https://gentle-suggestion-7c3.notion.site/Mes-projets-Home-Assistant-3eda02eefa8f81a48621c3caeef7fa8e)
