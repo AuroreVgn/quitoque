@@ -10,7 +10,7 @@
 
 Retrouvez l'ensemble de mes intégrations et projets Home Assistant sur ma page dédiée : [**🏠 Découvrir mes projets Home Assistant**](https://gentle-suggestion-7c3.notion.site/Mes-projets-Home-Assistant-3eda02eefa8f81a48621c3caeef7fa8e)
 
-## ☕️ Soutenir le projet
+## ☕ Soutenir le projet
 
 Si cette intégration vous est utile et que vous souhaitez soutenir son développement et sa maintenance :
 
@@ -66,13 +66,13 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - **Carte Lovelace Quitoque Card** avec affichage des recettes, images, temps en cuisine, portions et plusieurs modes de présentation.
 - Interface disponible en **français et anglais**.
 
-## Compatibilité
+## 🛡️ Compatibilité
 
 **Cette intégration dépend de l'interface web de Quitoque. Une modification du site peut donc nécessiter une mise à jour de l'intégration.**
 
 Si une page ou une donnée n'est plus détectée, ouvrez une issue en fournissant les journaux **sans donnée d'authentification**.
 
-## Installation
+## 📦 Installation
 
 ### Option A — HACS (recommandé)
 
@@ -113,7 +113,7 @@ Cette intégration étant un dépôt personnalisé, il faut l'ajouter une premi�
 
 3. Redémarrer Home Assistant.
 
-## Configuration
+## ⚙️ Configuration
 
 Après l'installation :
 
@@ -137,7 +137,7 @@ Renseigner :
 
 La déduplication du calendrier reste fondée sur l’**année ISO + le numéro de semaine**, ce qui évite également les collisions lors du passage S52/S53 → S01 d’une nouvelle année. Si Quitoque expose temporairement la même commande à la fois dans les prochaines box et les box commandées, elle est fusionnée par son identifiant de commande.
 
-## Entités créées
+## 📊 Entités créées
 
 ### Capteurs
 
@@ -223,7 +223,7 @@ recipe_details:
 | **Ajouter les recettes au calendrier** | Ajoute les semaines actives absentes du calendrier |
 | **Générer et télécharger les PDF** | Génère les fiches recettes et l'archive ZIP |
 
-## Dashboard Quitoque
+## 📈 Dashboard Quitoque
 
 Un **dashboard Quitoque** peut être utilisé pour regrouper dans une même vue les informations et commandes principales de l'intégration.
 
@@ -249,13 +249,13 @@ Il est disponible [ici](https://github.com/AuroreVgn/quitoque/tree/main/dashboar
 > [!NOTE]
 > Le dashboard est un complément à l'intégration. Les entités Quitoque restent utilisables librement dans n'importe quel autre dashboard Home Assistant.
 
-## Carte Lovelace — Quitoque Card
+## 🧩 Carte Lovelace — Quitoque Card
 
 Une carte Lovelace dédiée, **Quitoque Card**, est également disponible pour afficher les informations Quitoque directement dans un tableau de bord Home Assistant.
 
 Elle est disponible [ici](https://github.com/AuroreVgn/quitoque_card).
 
-## Calendrier
+## 📅 Calendrier
 
 Le bouton **Ajouter les recettes au calendrier** traite les box des semaines **S0 à S+4**.
 
@@ -305,13 +305,13 @@ sont considérées comme deux livraisons différentes.
 
 Le contrôle ne repose pas uniquement sur la date actuelle de l'événement : une recette déplacée manuellement dans le calendrier reste reconnue comme appartenant à sa semaine Quitoque d'origine.
 
-## Utilisation avec Google Calendar
+## 📅 Utilisation avec Google Calendar
 
 L'intégration écrit dans une entité `calendar` Home Assistant. Elle peut donc utiliser un calendrier Google dès lors que celui-ci est exposé dans Home Assistant par l'intégration Google Calendar et qu'il accepte la création d'événements.
 
 Il suffit de sélectionner ce calendrier dans le champ **Calendrier de destination** lors de la configuration de Quitoque.
 
-## PDF des recettes
+## 📄 PDF des recettes
 
 Le bouton **Générer et télécharger les PDF** récupère le détail des recettes et kits disposant d'une fiche recette exploitable et crée :
 
@@ -330,7 +330,7 @@ Les plats cuisinés qui ne disposent pas d'un véritable déroulé de recette re
 
 Le délai de conservation est configurable dans les options de l'intégration. Une valeur de `0` désactive la suppression automatique.
 
-## Recettes et produits du Marché
+## 🥕 Recettes et produits du Marché
 
 Quitoque utilise plusieurs catégories de produits dans une même commande.
 
@@ -347,7 +347,7 @@ Un produit du Marché n'est donc pas automatiquement considéré comme une recet
 
 Pour les plats cuisinés, l'intégration utilise notamment l'indication de portions présente sur la fiche produit afin de distinguer un véritable plat des autres articles du Marché.
 
-## Options
+## 🎛️ Options
 
 Les options peuvent être modifiées depuis :
 
@@ -361,7 +361,7 @@ Il est possible de modifier :
 - le délai de conservation des PDF
 - l’activation de la notification après synchronisation
 
-## Services Home Assistant
+## 🔧 Services Home Assistant
 
 En plus des boutons de l'appareil, l'intégration expose des services utilisables dans les scripts et automatisations :
 
@@ -393,7 +393,7 @@ Avec un seul compte Quitoque, aucun paramètre n'est nécessaire. Si plusieurs c
 
 Les services utilisent exactement les mêmes mécanismes que les boutons : verrouillage pendant l'exécution, gestion de S0 à S+4, anti-doublon calendrier et mise à jour des capteurs de diagnostic.
 
-## Dépannage
+## 🛠️ Dépannage
 
 ### Reconnexion automatique
 
@@ -421,7 +421,7 @@ Après redémarrage, les messages sont disponibles dans **Paramètres → Systè
 > [!WARNING]
 > Ne publiez jamais vos cookies de session, votre mot de passe ou un jeton CSRF dans une issue GitHub.
 
-## Contributions et problèmes
+## 🤝 Contributions et problèmes
 
 Les retours, corrections et propositions d'amélioration sont les bienvenus via les [issues GitHub](https://github.com/AuroreVgn/quitoque/issues).
 
@@ -432,7 +432,7 @@ Lors d'un signalement, pensez à indiquer :
 - le comportement attendu ;
 - les logs pertinents anonymisés.
 
-## Licence
+## 📄 Licence
 
 Projet distribué sous licence [MIT](LICENSE).
 
