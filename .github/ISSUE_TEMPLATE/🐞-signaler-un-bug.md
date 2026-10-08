@@ -1,8 +1,8 @@
 ---
-name: "🐞 Signaler un bug"
-about: "Signaler un problème avec Quitoque"
+name: "\U0001F41E Signaler un bug"
+about: Signaler un problème avec Quitoque
 title: "[BUG] - "
-labels: "bug"
+labels: bug
 assignees: AuroreVgn
 type: Bug
 

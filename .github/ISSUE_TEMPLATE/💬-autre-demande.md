@@ -1,8 +1,10 @@
 ---
-name: "💬 Autre demande (FR)"
-about: "Poser une question ou faire une autre demande concernant Quitoque"
+name: "\U0001F4AC Autre demande"
+about: Poser une question ou faire une autre demande concernant Quitoque
 title: "[QUESTION] - "
+labels: ''
 assignees: AuroreVgn
+
 ---
 
 ### Objet de la demande

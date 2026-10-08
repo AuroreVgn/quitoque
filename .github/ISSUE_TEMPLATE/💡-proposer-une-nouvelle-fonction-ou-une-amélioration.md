@@ -1,8 +1,8 @@
 ---
-name: "💡 Proposer une fonction ou une amélioration"
-about: "Proposer une amélioration de Quitoque"
+name: "\U0001F4A1 Proposer une fonction ou une amélioration"
+about: Proposer une amélioration de Quitoque
 title: "[AMÉLIORATION] - "
-labels: "enhancement / amélioration"
+labels: ''
 assignees: AuroreVgn
 type: Feature
 
@@ -23,4 +23,3 @@ type: Feature
 ### Description de la demande
 
 ### Bénéfice attendu
-
