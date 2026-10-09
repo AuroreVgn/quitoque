@@ -1,6 +1,6 @@
-title:: Quitoque
+title: Quitoque
 path: quitoque
-icon: mdi:food
+icon: mdi:food-variant
 panel: true
 cards:
   - type: custom:button-card
@@ -785,4 +785,3 @@ cards:
             </div>
           `;
         ]]]
-type: panel
