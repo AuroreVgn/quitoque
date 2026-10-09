@@ -1,7 +1,7 @@
+type: panel
 title: Quitoque
 path: quitoque
-icon: mdi:food-variant
-panel: true
+icon: mdi:carrot
 cards:
   - type: custom:button-card
     show_icon: false
@@ -352,8 +352,7 @@ cards:
                     fill_container: true
                     tap_action:
                       action: url
-                      url_path: >-
-                        https://my.home-assistant.io/redirect/calendar
+                      url_path: MON_CALENDRIER
                   - type: custom:button-card
                     show_icon: false
                     show_name: false
