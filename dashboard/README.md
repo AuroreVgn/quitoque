@@ -1,22 +1,43 @@
 # 🥕 Dashboard Quitoque pour Home Assistant
 
-Dashboard Home Assistant dédié à l'intégration **Quitoque**, permettant de visualiser facilement les prochaines livraisons et les recettes associées.
+[![GitHub Release][releases-shield]][releases]
+[![Licence MIT](https://img.shields.io/github/license/AuroreVgn/quitoque?style=flat-square)](../LICENSE)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.3%2B-41BDF5.svg?style=flat-square&logo=homeassistant)](https://www.home-assistant.io/)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://hacs.xyz/)
+[![Maintainers](https://img.shields.io/badge/maintainers-%40AuroreVgn%20%7C%20%40Li0c0-007ec6?style=flat-square)](https://github.com/Li0c0)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?style=flat-square&logo=ko-fi)](https://ko-fi.com/aurorevgn)
 
-Une variante du dashboard propose l'affichage de l'image pour chaque recette : quitoque-dashboard-with-images.yaml
+## 🏠 Mes projets Home Assistant
 
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Dashboard-41BDF5?logo=homeassistant&logoColor=white)
-![HACS](https://img.shields.io/badge/HACS-Compatible-41BDF5)
-![Quitoque](https://img.shields.io/badge/Quitoque-Integration-green)																	
+Retrouvez l'ensemble de mes intégrations et projets Home Assistant sur ma page dédiée : [**🏠 Découvrir mes projets Home Assistant**](https://gentle-suggestion-7c3.notion.site/Mes-projets-Home-Assistant-3eda02eefa8f81a48621c3caeef7fa8e)
 
----
+## ☕ Soutenir le projet
 
-## 📸 Aperçu du dashboard sans et avec images
+Si ce dashboard vous est utile et que vous souhaitez soutenir son développement et sa maintenance :
+
+<p>
+  <a href="https://ko-fi.com/aurorevgn">
+    <img src="https://storage.ko-fi.com/cdn/kofi4.png?v=3"
+         alt="Support me on Ko-fi"
+         height="45">
+  </a>
+</p>
+
+## ⚠️ Important
+
+Dashboard **Home Assistant** pour l'intégration [Quitoque](https://github.com/AuroreVgn/quitoque), permettant de suivre les livraisons et les recettes des semaines **S0 à S+4**.
+
+Deux configurations sont disponibles : [sans images](quitoque-dashboard.yaml) et [avec images des recettes](quitoque-dashboard-with-images.yaml).
+
+> [!IMPORTANT]
+> Ce dashboard est un projet communautaire non officiel. Il n'est ni développé, ni maintenu, ni supporté par Quitoque.
+
+## 📸 Screenshots
 
 ![Dashboard Quitoque](images/dashboard.png)
 
 ![Dashboard Quitoque](images/dashboard_with_images.png)
 
----
 
 ## ✨ Fonctionnalités
 
@@ -45,17 +66,16 @@ Cinq boutons sont disponibles dans le bandeau supérieur :
 | 📄 **Générer PDF** | Génère les fiches recettes PDF ainsi que l'archive ZIP |
 | 📄 **Supprimer** | Supprime les fiches recettes PDF ainsi que l'archive ZIP |
 
----
 
-# 📋 Prérequis
+## 📋 Prérequis
 
-## Home Assistant
+### Home Assistant
 
 Ce dashboard est conçu pour être utilisé avec **Home Assistant** et l'intégration personnalisée **Quitoque**.
 
 L'intégration doit être installée et configurée avant d'utiliser le dashboard.
 
-## Cartes Lovelace nécessaires
+### Cartes Lovelace nécessaires
 
 Le dashboard utilise deux cartes personnalisées :
 
@@ -65,11 +85,10 @@ Le dashboard utilise deux cartes personnalisées :
 
 Ces cartes peuvent être installées facilement depuis **HACS**.
 
----
 
-# 🚀 Installation
+## 📦 Installation
 
-## 1. Installer les cartes nécessaires
+### 1. Installer les cartes nécessaires
 
 Vérifiez que les cartes suivantes sont installées dans Home Assistant :
 
@@ -80,9 +99,8 @@ Mushroom
 
 Rechargez ou redémarrez Home Assistant si nécessaire après leur installation.
 
----
 
-## 2. Créer le dashboard
+### 2. Créer le dashboard
 
 Dans Home Assistant :
 
@@ -98,9 +116,8 @@ panel: true
 
 afin d'utiliser toute la largeur disponible.
 
----
 
-## 3. Copier la configuration
+### 3. Copier la configuration
 
 Copiez le contenu du fichier :
 
@@ -119,9 +136,8 @@ icon: mdi:food-variant
 panel: true
 ```
 
----
 
-# 🗓️ Bouton Calendrier
+## 📅 Bouton Calendrier
 
 Par défaut, le bouton **Calendrier** ouvre directement le calendrier de Home Assistant.
 
@@ -136,7 +152,7 @@ tap_action:
 
 Cela rend le bouton directement fonctionnel sans configuration supplémentaire.
 
-## Utiliser un autre calendrier
+### Utiliser un autre calendrier
 
 Vous pouvez remplacer cette URL par celle du calendrier de votre choix.
 
@@ -169,9 +185,8 @@ Vous pouvez par exemple utiliser :
 - un calendrier auto-hébergé ;
 - toute autre interface Web de votre choix.
 
----
 
-# 📅 Semaines affichées
+## 📅 Semaines affichées
 
 Le dashboard affiche cinq semaines :
 
@@ -198,9 +213,8 @@ mer. 2 sept. 2026
 
 Les dates utilisent volontairement des noms de jours et de mois abrégés afin de conserver une présentation régulière quelle que soit la date.
 
----
 
-# 🎨 Couleurs
+## 🎨 Couleurs
 
 Une couleur différente est utilisée pour chaque semaine :
 
@@ -214,9 +228,8 @@ Une couleur différente est utilisée pour chaque semaine :
 
 Ces couleurs sont utilisées pour les séparateurs, les icônes, l'état de la box et le compteur de recettes.
 
----
 
-# 🖥️ Affichage dynamique
+## 🖥️ Affichage dynamique
 
 Le dashboard utilise une grille CSS dynamique pour répartir l'espace entre :
 
@@ -234,9 +247,8 @@ La zone des boutons utilise également une grille de quatre colonnes afin que le
 
 La largeur du bandeau s'adapte ainsi automatiquement à la largeur disponible.
 
----
 
-# 🔧 Entités utilisées
+## 📊 Entités utilisées
 
 Les `entity_id` Home Assistant ne changent pas automatiquement lorsque la langue de Home Assistant est modifiée.
 
@@ -248,9 +260,8 @@ Pour faciliter le partage du dashboard, celui-ci recherche automatiquement plusi
 > Il ne s'agit pas d'une détection de la langue de Home Assistant.  
 > Le dashboard teste les différents `entity_id` connus et utilise automatiquement le premier qui existe.
 
----
 
-## 📦 Livraisons
+### 📦 Livraisons
 
 | Entité française | Entité anglaise |
 |---|---|
@@ -266,9 +277,8 @@ Pour **S0**, le dashboard reconnaît également l'ancienne variante :
 sensor.quitoque_delivery_in_0_weeks
 ```
 
----
 
-## 🍽️ Nombre de recettes
+### 🍽️ Nombre de recettes
 
 | Entité française | Entité anglaise |
 |---|---|
@@ -284,17 +294,15 @@ Pour **S0**, le dashboard reconnaît également :
 sensor.quitoque_recipes_in_0_weeks
 ```
 
----
 
-## 🔄 Dernière synchronisation du calendrier
+### 🔄 Dernière synchronisation du calendrier
 
 | Entité française | Entité anglaise |
 |---|---|
 | `sensor.quitoque_derniere_synchronisation_du_calendrier` | `sensor.quitoque_last_calendar_synchronization` |
 
----
 
-## 🔘 Bouton Actualiser
+### 🔘 Bouton Actualiser
 
 Le dashboard recherche automatiquement les entités suivantes :
 
@@ -302,9 +310,8 @@ Le dashboard recherche automatiquement les entités suivantes :
 |---|---|
 | `button.quitoque_refresh` | `button.quitoque_actualiser` |
 
----
 
-## 📅 Bouton Ajouter au calendrier
+### 📅 Bouton Ajouter au calendrier
 
 | Entité anglaise | Entité française |
 |---|---|
@@ -316,9 +323,8 @@ Le dashboard reconnaît également :
 button.quitoque_sync_calendar
 ```
 
----
 
-## 📄 Bouton Générer les PDF
+### 📄 Bouton Générer les PDF
 
 | Entité anglaise | Entité française |
 |---|---|
@@ -331,9 +337,8 @@ button.quitoque_generer_les_pdf_recette
 button.quitoque_export_pdf
 ```
 
----
 
-# 🔎 Comment fonctionne la détection des entités ?
+## 🔎 Détection des entités
 
 Pour les capteurs, le dashboard utilise une fonction JavaScript de ce type :
 
@@ -357,9 +362,8 @@ return ids.find(id => states[id] !== undefined) || ids[0];
 
 Cela permet au même fichier YAML de fonctionner sur plusieurs installations sans demander systématiquement à l'utilisateur de renommer ses entités.
 
----
 
-# 🖼️ Logo Quitoque
+## 🖼️ Logo Quitoque
 
 Le dashboard tente de récupérer automatiquement le logo depuis le dépôt de l'intégration :
 
@@ -369,9 +373,8 @@ custom_components/quitoque/brand/icon.png
 
 Si cette image ne peut pas être chargée, le dashboard tente d'utiliser l'icône fournie par Home Assistant comme solution de secours.
 
----
 
-# 🛠️ Personnalisation
+## 🎛️ Personnalisation
 
 Le dashboard peut facilement être adapté.
 
@@ -386,11 +389,10 @@ Vous pouvez notamment modifier :
 
 Les couleurs des semaines sont définies directement dans le tableau JavaScript `weeks`.
 
----
 
-# ❓ Dépannage
+## 🛠️ Dépannage
 
-## Le dashboard n'affiche aucune recette
+### Le dashboard n'affiche aucune recette
 
 Vérifiez que :
 
@@ -399,9 +401,8 @@ Vérifiez que :
 3. les entités Quitoque sont disponibles dans Home Assistant ;
 4. les recettes sont présentes dans les attributs des capteurs correspondants.
 
----
 
-## Les cartes ne s'affichent pas
+### Les cartes ne s'affichent pas
 
 Vérifiez que **button-card** et **Mushroom** sont correctement installés.
 
@@ -409,9 +410,8 @@ Vous pouvez vérifier leur présence depuis :
 
 **HACS → Frontend**
 
----
 
-## Un bouton ne fonctionne pas
+### Un bouton ne fonctionne pas
 
 Dans :
 
@@ -425,9 +425,8 @@ button.quitoque_
 
 Puis vérifiez que l'un des `entity_id` prévus par le dashboard existe bien.
 
----
 
-## Le bouton Calendrier ouvre le mauvais calendrier
+### Le bouton Calendrier ouvre le mauvais calendrier
 
 Recherchez :
 
@@ -437,9 +436,8 @@ url_path:
 
 dans le fichier YAML et remplacez l'URL par celle de votre calendrier.
 
----
 
-# 🤝 Contributions
+## 🤝 Contributions et problèmes
 
 Les suggestions, améliorations et corrections sont les bienvenues.
 
@@ -449,9 +447,8 @@ Vous pouvez :
 - proposer une amélioration ;
 - soumettre une **Pull Request**.
 
----
 
-# ⚠️ Projet non officiel
+### Projet non officiel
 
 Ce dashboard est un projet communautaire indépendant.
 
@@ -459,8 +456,10 @@ Il n'est ni développé, ni maintenu, ni officiellement supporté par **Quitoque
 
 Les marques, noms et logos appartiennent à leurs propriétaires respectifs.
 
----
 
 ## ❤️ Remerciements
 
 Merci à la communauté **Home Assistant**, aux développeurs de **button-card** et **Mushroom**, ainsi qu'aux utilisateurs qui contribuent aux tests et à l'amélioration de l'intégration Quitoque et de ce dashboard.
+
+[releases-shield]: https://img.shields.io/github/v/release/AuroreVgn/quitoque?style=flat-square
+[releases]: https://github.com/AuroreVgn/quitoque/releases
