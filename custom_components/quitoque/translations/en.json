@@ -11,7 +11,12 @@
           "target_calendar": "Destination calendar",
           "event_prefix": "Custom event prefix (optional)",
           "pdf_retention_days": "PDF retention (days, 0 = never delete)",
-          "notify_after_sync": "Notify after synchronization"
+          "notify_after_sync": "Notify after synchronization",
+          "notify_new_order": "Notify when a new editable order is detected",
+          "notify_before_deadline": "Remind before the deadline",
+          "notify_deadline_days": "Days before deadline",
+          "notify_channel": "Notification channel",
+          "notify_mobile_targets": "Mobile devices to notify"
         },
         "data_description": {
           "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar."
@@ -43,7 +48,12 @@
           "target_calendar": "Destination calendar",
           "event_prefix": "Custom event prefix (optional)",
           "pdf_retention_days": "PDF retention (days, 0 = never delete)",
-          "notify_after_sync": "Notify after synchronization"
+          "notify_after_sync": "Notify after synchronization",
+          "notify_new_order": "Notify when a new editable order is detected",
+          "notify_before_deadline": "Remind before the deadline",
+          "notify_deadline_days": "Days before deadline",
+          "notify_channel": "Notification channel",
+          "notify_mobile_targets": "Mobile devices to notify"
         },
         "description": "The integration manages deliveries from the current week through 4 weeks ahead (W0 to W+4). W0 and W+1 are read from ordered boxes, while W+2 to W+4 come from active upcoming boxes. Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, boxes from W0 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no delivery is available.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
         "data_description": {
