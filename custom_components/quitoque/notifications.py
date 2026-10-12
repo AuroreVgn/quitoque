@@ -1,0 +1,146 @@
+"""Notifications for newly editable Quitoque orders and selection deadlines."""
+
+from __future__ import annotations
+
+from datetime import datetime, time, timedelta
+import logging
+
+from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
+
+from .const import (
+    CONF_NOTIFY_BEFORE_DEADLINE,
+    CONF_NOTIFY_CHANNEL,
+    CONF_NOTIFY_DEADLINE_DAYS,
+    CONF_NOTIFY_MOBILE_TARGETS,
+    CONF_NOTIFY_NEW_ORDER,
+    DASHBOARD_URL,
+    DEFAULT_NOTIFY_DEADLINE_DAYS,
+    DOMAIN,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class QuitoqueOrderNotifications:
+    """Track observed orders and sent alerts across Home Assistant restarts."""
+
+    def __init__(self, hass, entry):
+        self.hass = hass
+        self.entry = entry
+        self.store = Store(hass, 1, f"{DOMAIN}_{entry.entry_id}_order_notifications")
+        self.loaded = False
+        self.initialized = False
+        self.seen: set[str] = set()
+        self.reminded: set[str] = set()
+
+    async def _load(self):
+        if self.loaded:
+            return
+        saved = await self.store.async_load()
+        if isinstance(saved, dict):
+            self.seen = {str(x) for x in saved.get("seen", [])}
+            self.reminded = {str(x) for x in saved.get("reminded", [])}
+            self.initialized = bool(saved.get("initialized", False))
+        self.loaded = True
+
+    def _option(self, key, default):
+        return self.entry.options.get(key, self.entry.data.get(key, default))
+
+    def _deadline(self, order):
+        """Provisional observed rule: delivery minus six days at 23:59."""
+        zone = dt_util.get_time_zone(self.hass.config.time_zone)
+        return datetime.combine(
+            order.delivery_date - timedelta(days=6), time(23, 59), tzinfo=zone
+        )
+
+    async def process(self, orders):
+        """Evaluate successful polls; seed existing orders silently on first run."""
+        await self._load()
+        now = dt_util.now()
+        first_poll = not self.initialized
+        changed = first_poll
+        days = max(1, min(7, int(self._option(
+            CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS
+        ))))
+        new_enabled = bool(self._option(CONF_NOTIFY_NEW_ORDER, False))
+        deadline_enabled = bool(self._option(CONF_NOTIFY_BEFORE_DEADLINE, False))
+
+        for order in orders:
+            key = str(order.order_id)
+            deadline = self._deadline(order)
+            if key not in self.seen:
+                self.seen.add(key)
+                changed = True
+                if not first_poll and new_enabled and now < deadline:
+                    await self._notify(
+                        f"new_{key}",
+                        "Nouvelle sélection Quitoque disponible",
+                        f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes.",
+                        order.recipes_url,
+                    )
+
+            # Only orders still editable may produce a deadline reminder.
+            if now >= deadline or order.delivery_date < now.date():
+                continue
+            reminder_key = f"{key}:{days}"
+            if deadline_enabled and reminder_key not in self.reminded and now >= deadline - timedelta(days=days):
+                # A first poll never sends alerts, including overdue reminders.
+                self.reminded.add(reminder_key)
+                changed = True
+                if not first_poll:
+                    await self._notify(
+                        f"deadline_{key}_{days}",
+                        "Quitoque : clôture des recettes",
+                        f"La sélection de la box du {order.delivery_date:%d/%m/%Y} clôture le {deadline:%d/%m/%Y} à 23h59. Vérifiez vos recettes.",
+                        order.recipes_url,
+                    )
+
+        if changed:
+            self.initialized = True
+            await self.store.async_save({
+                "initialized": True,
+                "seen": sorted(self.seen),
+                "reminded": sorted(self.reminded),
+            })
+
+    async def _notify(self, suffix, title, message, url):
+        if not isinstance(url, str) or not url.startswith("https://www.quitoque.fr/"):
+            url = DASHBOARD_URL
+        channel = self._option(CONF_NOTIFY_CHANNEL, "persistent")
+        if channel in ("persistent", "both"):
+            try:
+                await self.hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {
+                        "title": title,
+                        "message": f"{message}\n\n[Modifier ma box]({url})",
+                        "notification_id": f"quitoque_{self.entry.entry_id}_{suffix}",
+                    },
+                    blocking=True,
+                )
+            except Exception:
+                _LOGGER.exception("Impossible de créer la notification persistante Quitoque")
+
+        if channel in ("mobile", "both"):
+            targets = self._option(CONF_NOTIFY_MOBILE_TARGETS, [])
+            for target in targets if isinstance(targets, list) else []:
+                if not isinstance(target, str) or not target.startswith("mobile_app_"):
+                    continue
+                if not self.hass.services.has_service("notify", target):
+                    _LOGGER.warning("Service de notification mobile indisponible : %s", target)
+                    continue
+                try:
+                    await self.hass.services.async_call(
+                        "notify",
+                        target,
+                        {
+                            "title": title,
+                            "message": message,
+                            "data": {"url": url, "clickAction": url},
+                        },
+                        blocking=True,
+                    )
+                except Exception:
+                    _LOGGER.exception("Échec de notification mobile Quitoque : %s", target)
