@@ -24,6 +24,10 @@ from .const import (
     CONF_NOTIFY_DEADLINE_DAYS,
     CONF_NOTIFY_CHANNEL,
     CONF_NOTIFY_MOBILE_TARGETS,
+    CONF_NOTIFY_MOBILE_NEW_MESSAGE,
+    CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE,
+    DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE,
+    DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE,
     DEFAULT_NOTIFY_DEADLINE_DAYS,
     CONF_RECIPES_URL,
     CONF_TARGET_CALENDAR,
@@ -77,15 +81,13 @@ class QuitoqueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             CONF_PDF_RETENTION_DAYS, DEFAULT_PDF_RETENTION_DAYS
                         ),
                         CONF_NOTIFY_NEW_ORDER: bool(user_input.get(CONF_NOTIFY_NEW_ORDER, False)),
-                        CONF_NOTIFY_BEFORE_DEADLINE: bool(user_input.get(CONF_NOTIFY_BEFORE_DEADLINE, False)),
-                        CONF_NOTIFY_DEADLINE_DAYS: int(user_input.get(CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS)),
-                        CONF_NOTIFY_CHANNEL: user_input.get(CONF_NOTIFY_CHANNEL, "persistent"),
-                        CONF_NOTIFY_MOBILE_TARGETS: user_input.get(CONF_NOTIFY_MOBILE_TARGETS, []),
-                        CONF_NOTIFY_NEW_ORDER: bool(user_input.get(CONF_NOTIFY_NEW_ORDER, False)),
                     CONF_NOTIFY_BEFORE_DEADLINE: bool(user_input.get(CONF_NOTIFY_BEFORE_DEADLINE, False)),
                     CONF_NOTIFY_DEADLINE_DAYS: int(user_input.get(CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS)),
                     CONF_NOTIFY_CHANNEL: user_input.get(CONF_NOTIFY_CHANNEL, "persistent"),
                     CONF_NOTIFY_MOBILE_TARGETS: user_input.get(CONF_NOTIFY_MOBILE_TARGETS, []),
+                    CONF_NOTIFY_MOBILE_NEW_MESSAGE: user_input.get(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE),
+                    CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE: user_input.get(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE),
+
                     CONF_NOTIFY_AFTER_SYNC: bool(
                             user_input.get(
                                 CONF_NOTIFY_AFTER_SYNC,
@@ -123,6 +125,8 @@ class QuitoqueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_NOTIFY_DEADLINE_DAYS, default=DEFAULT_NOTIFY_DEADLINE_DAYS): selector.NumberSelector(selector.NumberSelectorConfig(min=1, max=7, step=1, mode=selector.NumberSelectorMode.BOX)),
                 vol.Optional(CONF_NOTIFY_CHANNEL, default="persistent"): selector.SelectSelector(selector.SelectSelectorConfig(options=[selector.SelectOptionDict(value="persistent", label=localize(self.hass, "Home Assistant uniquement", "Home Assistant only")), selector.SelectOptionDict(value="mobile", label=localize(self.hass, "Notifications mobiles uniquement", "Mobile push only")), selector.SelectOptionDict(value="both", label=localize(self.hass, "Home Assistant et mobiles", "Home Assistant and mobile push"))])),
                 vol.Optional(CONF_NOTIFY_MOBILE_TARGETS, default=[]): selector.SelectSelector(selector.SelectSelectorConfig(options=[service for service in self.hass.services.async_services().get("notify", {}) if service.startswith("mobile_app_")], multiple=True, custom_value=True)),
+                vol.Optional(CONF_NOTIFY_MOBILE_NEW_MESSAGE, default=DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
+                vol.Optional(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, default=DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
                 vol.Required(CONF_TARGET_CALENDAR): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain="calendar")
                 ),
@@ -250,6 +254,8 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(CONF_NOTIFY_DEADLINE_DAYS, default=self._entry.options.get(CONF_NOTIFY_DEADLINE_DAYS, self._entry.data.get(CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS))): selector.NumberSelector(selector.NumberSelectorConfig(min=1, max=7, step=1, mode=selector.NumberSelectorMode.BOX)),
                     vol.Optional(CONF_NOTIFY_CHANNEL, default=self._entry.options.get(CONF_NOTIFY_CHANNEL, self._entry.data.get(CONF_NOTIFY_CHANNEL, "persistent"))): selector.SelectSelector(selector.SelectSelectorConfig(options=[selector.SelectOptionDict(value="persistent", label=localize(self.hass, "Home Assistant uniquement", "Home Assistant only")), selector.SelectOptionDict(value="mobile", label=localize(self.hass, "Notifications mobiles uniquement", "Mobile push only")), selector.SelectOptionDict(value="both", label=localize(self.hass, "Home Assistant et mobiles", "Home Assistant and mobile push"))])),
                     vol.Optional(CONF_NOTIFY_MOBILE_TARGETS, default=self._entry.options.get(CONF_NOTIFY_MOBILE_TARGETS, self._entry.data.get(CONF_NOTIFY_MOBILE_TARGETS, []))): selector.SelectSelector(selector.SelectSelectorConfig(options=[service for service in self.hass.services.async_services().get("notify", {}) if service.startswith("mobile_app_")], multiple=True, custom_value=True)),
+                    vol.Optional(CONF_NOTIFY_MOBILE_NEW_MESSAGE, default=self._entry.options.get(CONF_NOTIFY_MOBILE_NEW_MESSAGE, self._entry.data.get(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE))): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
+                    vol.Optional(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, default=self._entry.options.get(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, self._entry.data.get(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE))): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
                     vol.Required(
                         CONF_TARGET_CALENDAR,
                         default=self._entry.options.get(
