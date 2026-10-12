@@ -10,6 +10,11 @@ CONF_TARGET_CALENDAR = "target_calendar"
 CONF_EVENT_PREFIX = "event_prefix"
 CONF_PDF_RETENTION_DAYS = "pdf_retention_days"
 CONF_NOTIFY_AFTER_SYNC = "notify_after_sync"
+CONF_NOTIFY_NEW_ORDER = "notify_new_order"
+CONF_NOTIFY_BEFORE_DEADLINE = "notify_before_deadline"
+CONF_NOTIFY_DEADLINE_DAYS = "notify_deadline_days"
+CONF_NOTIFY_CHANNEL = "notify_channel"
+CONF_NOTIFY_MOBILE_TARGETS = "notify_mobile_targets"
 CONF_EVENT_START = "event_start"
 CONF_EVENT_DURATION = "event_duration"
 
@@ -19,6 +24,7 @@ DEFAULT_EVENT_START = "18:00:00"
 DEFAULT_EVENT_DURATION = 60
 DEFAULT_PDF_RETENTION_DAYS = 7
 DEFAULT_NOTIFY_AFTER_SYNC = False
+DEFAULT_NOTIFY_DEADLINE_DAYS = 3
 
 BASE_URL = "https://www.quitoque.fr"
 LOGIN_URL = f"{BASE_URL}/login"
