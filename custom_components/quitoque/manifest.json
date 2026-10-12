@@ -11,7 +11,7 @@
   "loggers": [
     "custom_components.quitoque"
   ],
-  "version": "1.4.2-beta4",
+  "version": "1.4.2-beta5",
   "requirements": [
     "reportlab==4.4.9"
   ],
