@@ -20,6 +20,7 @@ from .metadata import (
     async_resolve_recipe_catalogue_metadata,
 )
 from .models import QuitoqueOrder
+from .notifications import QuitoqueOrderNotifications
 from .history_images import async_history_recipe_metadata
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
             config_entry=entry,
         )
         self.client = client
+        self.order_notifications = QuitoqueOrderNotifications(hass, entry)
         self._entry = entry
         self.orders: tuple[QuitoqueOrder, ...] = ()
         self.operation_in_progress = False
@@ -317,6 +319,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
         try:
             self.orders = await self.client.async_get_orders()
             await self._async_update_recipe_metadata(self.orders)
+            await self.order_notifications.process(self.orders)
             return self.orders[0] if self.orders else None
         except QuitoqueAuthenticationError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
