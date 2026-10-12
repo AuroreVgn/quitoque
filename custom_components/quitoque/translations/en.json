@@ -16,13 +16,17 @@
           "notify_before_deadline": "Remind before the deadline",
           "notify_deadline_days": "Days before deadline",
           "notify_channel": "Notification delivery method",
-          "notify_mobile_targets": "Mobile devices to notify"
+          "notify_mobile_targets": "Mobile devices to notify",
+          "notify_mobile_new_message": "Push message — new order",
+          "notify_mobile_deadline_message": "Push message — deadline reminder"
         },
         "data_description": {
           "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar.",
           "notify_channel": "Choose where to receive Quitoque alerts.",
           "notify_mobile_targets": "Select one or more devices for push notifications.",
-          "notify_deadline_days": "Number of days before the recipe selection deadline."
+          "notify_deadline_days": "Number of days before the recipe selection deadline.",
+          "notify_mobile_new_message": "Customizable text. Variables: {delivery_date}, {deadline_date}, {order_id}.",
+          "notify_mobile_deadline_message": "Customizable text. Variables: {delivery_date}, {deadline_date}, {order_id}."
         }
       },
       "reauth_confirm": {
@@ -56,14 +60,18 @@
           "notify_before_deadline": "Remind before the deadline",
           "notify_deadline_days": "Days before deadline",
           "notify_channel": "Notification delivery method",
-          "notify_mobile_targets": "Mobile devices to notify"
+          "notify_mobile_targets": "Mobile devices to notify",
+          "notify_mobile_new_message": "Push message — new order",
+          "notify_mobile_deadline_message": "Push message — deadline reminder"
         },
         "description": "The integration retrieves deliveries from the current week up to four weeks ahead (W0 to W+4). You can add recipes to your calendar and generate recipe PDFs. Weeks already present in the calendar are not imported again. PDFs are deleted according to your chosen retention period.\n\n🔔 Optional notifications: receive an alert when a new order becomes editable and/or a reminder before recipe selection closes. Choose a reminder period of 1 to 7 days and a delivery method: Home Assistant notification, mobile push, or both. Select mobile devices below. Existing orders do not trigger new-order alerts on first startup.",
         "data_description": {
           "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar.",
           "notify_channel": "Choose where to receive Quitoque alerts.",
           "notify_mobile_targets": "Select one or more devices for push notifications.",
-          "notify_deadline_days": "Number of days before the recipe selection deadline."
+          "notify_deadline_days": "Number of days before the recipe selection deadline.",
+          "notify_mobile_new_message": "Customizable text. Variables: {delivery_date}, {deadline_date}, {order_id}.",
+          "notify_mobile_deadline_message": "Customizable text. Variables: {delivery_date}, {deadline_date}, {order_id}."
         }
       }
     }
