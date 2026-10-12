@@ -15,6 +15,8 @@ CONF_NOTIFY_BEFORE_DEADLINE = "notify_before_deadline"
 CONF_NOTIFY_DEADLINE_DAYS = "notify_deadline_days"
 CONF_NOTIFY_CHANNEL = "notify_channel"
 CONF_NOTIFY_MOBILE_TARGETS = "notify_mobile_targets"
+CONF_NOTIFY_MOBILE_NEW_MESSAGE = "notify_mobile_new_message"
+CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE = "notify_mobile_deadline_message"
 CONF_EVENT_START = "event_start"
 CONF_EVENT_DURATION = "event_duration"
 
@@ -25,6 +27,8 @@ DEFAULT_EVENT_DURATION = 60
 DEFAULT_PDF_RETENTION_DAYS = 7
 DEFAULT_NOTIFY_AFTER_SYNC = False
 DEFAULT_NOTIFY_DEADLINE_DAYS = 3
+DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE = "Votre box du {delivery_date} est maintenant modifiable. Choisissez vos recettes !"
+DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE = "Votre box du {delivery_date} sera clôturée le {deadline_date} à 23h59. Vérifiez vos recettes !"
 
 BASE_URL = "https://www.quitoque.fr"
 LOGIN_URL = f"{BASE_URL}/login"
