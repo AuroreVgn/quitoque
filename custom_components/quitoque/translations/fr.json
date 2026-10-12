@@ -50,7 +50,7 @@
   },
   "options": {
     "step": {
-      "init": {
+      "notifications": {
         "title": "Options Quitoque",
         "data": {
           "recipes_url": "URL de la page des recettes (vide = détection automatique)",
