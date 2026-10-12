@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connexion à Quitoque",
-        "description": "L’intégration récupère les livraisons de la semaine en cours jusqu’à quatre semaines à l’avance (S0 à S+4). Elle permet d’ajouter les recettes au calendrier et de générer leurs PDF. Les semaines déjà présentes dans le calendrier ne sont pas importées une seconde fois. Les PDF sont supprimés selon la durée de conservation choisie.\n\n🔔 Notifications facultatives : recevez une alerte lorsqu’une nouvelle commande devient modifiable et/ou un rappel avant la clôture de la sélection des recettes. Choisissez un délai de 1 à 7 jours et le mode d’envoi : notification Home Assistant, push mobile ou les deux. Les appareils mobiles peuvent être sélectionnés ci-dessous. Les commandes déjà présentes au premier démarrage ne déclenchent pas d’alerte de nouvelle commande.",
+        "description": "Quitoque récupère les livraisons de S0 à S+4, ajoute les recettes au calendrier et permet de générer les PDF. Les semaines déjà importées sont ignorées et les PDF sont nettoyés selon la durée choisie.\n\nNotifications des commandes (facultatives) : activez l'alerte lorsqu'une nouvelle box devient modifiable et/ou le rappel avant la clôture de la sélection. Le rappel peut être envoyé de 1 à 7 jours avant la date limite estimée (livraison moins 6 jours, à 23h59). Choisissez Home Assistant, les appareils mobiles ou les deux. Vous pouvez personnaliser les messages push. Les commandes déjà connues lors de la première actualisation ne déclenchent pas d'alerte.",
         "data": {
           "username": "Adresse e-mail / identifiant",
           "password": "Mot de passe",
@@ -11,22 +11,24 @@
           "target_calendar": "Calendrier de destination",
           "event_prefix": "Préfixe personnalisé des événements (facultatif)",
           "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
-          "notify_after_sync": "Notifier après la synchronisation",
-          "notify_new_order": "Notifier lorsqu’une nouvelle commande modifiable est détectée",
-          "notify_before_deadline": "Envoyer un rappel avant la clôture",
-          "notify_deadline_days": "Nombre de jours avant la clôture",
-          "notify_channel": "Mode d’envoi des notifications",
-          "notify_mobile_targets": "Appareils mobiles à notifier",
-          "notify_mobile_new_message": "Message push — nouvelle commande",
-          "notify_mobile_deadline_message": "Message push — rappel de clôture"
+          "notify_after_sync": "Notifier après l'ajout au calendrier",
+          "notify_new_order": "Alerter pour une nouvelle box modifiable",
+          "notify_before_deadline": "Rappeler la clôture des recettes",
+          "notify_deadline_days": "Rappel avant clôture (jours)",
+          "notify_channel": "Envoyer les alertes via",
+          "notify_mobile_targets": "Téléphones et tablettes à notifier",
+          "notify_mobile_new_message": "Texte du push : nouvelle box",
+          "notify_mobile_deadline_message": "Texte du push : rappel"
         },
         "data_description": {
-          "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé.",
-          "notify_channel": "Choisissez où recevoir les alertes Quitoque.",
-          "notify_mobile_targets": "Sélectionnez un ou plusieurs appareils pour les notifications push.",
-          "notify_deadline_days": "Nombre de jours avant la date limite de modification des recettes.",
-          "notify_mobile_new_message": "Texte personnalisable. Variables : {delivery_date}, {deadline_date}, {order_id}.",
-          "notify_mobile_deadline_message": "Texte personnalisable. Variables : {delivery_date}, {deadline_date}, {order_id}."
+          "notify_after_sync": "Notification Home Assistant à la fin de l'import des recettes dans le calendrier. Indépendante des alertes de commandes.",
+          "notify_channel": "Choisissez une notification persistante Home Assistant, un push mobile, ou les deux.",
+          "notify_mobile_targets": "Sélectionnez les appareils qui recevront les push lorsque le mode mobile est activé.",
+          "notify_deadline_days": "Délai entre 1 et 7 jours avant la clôture estimée. Utilisé uniquement si le rappel est activé.",
+          "notify_mobile_new_message": "Message push personnalisable. Variables disponibles : date de livraison, date limite et numéro de commande.",
+          "notify_mobile_deadline_message": "Message push personnalisable. Variables disponibles : date de livraison, date limite et numéro de commande.",
+          "notify_new_order": "Alerte lorsqu'une nouvelle commande devient disponible pour choisir les recettes. Pas d'alerte pour les commandes déjà présentes au premier démarrage.",
+          "notify_before_deadline": "Envoie un rappel avant la date limite estimée pour modifier les recettes de la box."
         }
       },
       "reauth_confirm": {
@@ -55,23 +57,25 @@
           "target_calendar": "Calendrier de destination",
           "event_prefix": "Préfixe personnalisé des événements (facultatif)",
           "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
-          "notify_after_sync": "Notifier après la synchronisation",
-          "notify_new_order": "Notifier lorsqu’une nouvelle commande modifiable est détectée",
-          "notify_before_deadline": "Envoyer un rappel avant la clôture",
-          "notify_deadline_days": "Nombre de jours avant la clôture",
-          "notify_channel": "Mode d’envoi des notifications",
-          "notify_mobile_targets": "Appareils mobiles à notifier",
-          "notify_mobile_new_message": "Message push — nouvelle commande",
-          "notify_mobile_deadline_message": "Message push — rappel de clôture"
+          "notify_after_sync": "Notifier après l'ajout au calendrier",
+          "notify_new_order": "Alerter pour une nouvelle box modifiable",
+          "notify_before_deadline": "Rappeler la clôture des recettes",
+          "notify_deadline_days": "Rappel avant clôture (jours)",
+          "notify_channel": "Envoyer les alertes via",
+          "notify_mobile_targets": "Téléphones et tablettes à notifier",
+          "notify_mobile_new_message": "Texte du push : nouvelle box",
+          "notify_mobile_deadline_message": "Texte du push : rappel"
         },
-        "description": "L’intégration récupère les livraisons de la semaine en cours jusqu’à quatre semaines à l’avance (S0 à S+4). Elle permet d’ajouter les recettes au calendrier et de générer leurs PDF. Les semaines déjà présentes dans le calendrier ne sont pas importées une seconde fois. Les PDF sont supprimés selon la durée de conservation choisie.\n\n🔔 Notifications facultatives : recevez une alerte lorsqu’une nouvelle commande devient modifiable et/ou un rappel avant la clôture de la sélection des recettes. Choisissez un délai de 1 à 7 jours et le mode d’envoi : notification Home Assistant, push mobile ou les deux. Les appareils mobiles peuvent être sélectionnés ci-dessous. Les commandes déjà présentes au premier démarrage ne déclenchent pas d’alerte de nouvelle commande.",
+        "description": "Quitoque récupère les livraisons de S0 à S+4, ajoute les recettes au calendrier et permet de générer les PDF. Les semaines déjà importées sont ignorées et les PDF sont nettoyés selon la durée choisie.\n\nNotifications des commandes (facultatives) : activez l'alerte lorsqu'une nouvelle box devient modifiable et/ou le rappel avant la clôture de la sélection. Le rappel peut être envoyé de 1 à 7 jours avant la date limite estimée (livraison moins 6 jours, à 23h59). Choisissez Home Assistant, les appareils mobiles ou les deux. Vous pouvez personnaliser les messages push. Les commandes déjà connues lors de la première actualisation ne déclenchent pas d'alerte.",
         "data_description": {
-          "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé.",
-          "notify_channel": "Choisissez où recevoir les alertes Quitoque.",
-          "notify_mobile_targets": "Sélectionnez un ou plusieurs appareils pour les notifications push.",
-          "notify_deadline_days": "Nombre de jours avant la date limite de modification des recettes.",
-          "notify_mobile_new_message": "Texte personnalisable. Variables : {delivery_date}, {deadline_date}, {order_id}.",
-          "notify_mobile_deadline_message": "Texte personnalisable. Variables : {delivery_date}, {deadline_date}, {order_id}."
+          "notify_after_sync": "Notification Home Assistant à la fin de l'import des recettes dans le calendrier. Indépendante des alertes de commandes.",
+          "notify_channel": "Choisissez une notification persistante Home Assistant, un push mobile, ou les deux.",
+          "notify_mobile_targets": "Sélectionnez les appareils qui recevront les push lorsque le mode mobile est activé.",
+          "notify_deadline_days": "Délai entre 1 et 7 jours avant la clôture estimée. Utilisé uniquement si le rappel est activé.",
+          "notify_mobile_new_message": "Message push personnalisable. Variables disponibles : date de livraison, date limite et numéro de commande.",
+          "notify_mobile_deadline_message": "Message push personnalisable. Variables disponibles : date de livraison, date limite et numéro de commande.",
+          "notify_new_order": "Alerte lorsqu'une nouvelle commande devient disponible pour choisir les recettes. Pas d'alerte pour les commandes déjà présentes au premier démarrage.",
+          "notify_before_deadline": "Envoie un rappel avant la date limite estimée pour modifier les recettes de la box."
         }
       }
     }
