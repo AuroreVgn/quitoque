@@ -191,7 +191,7 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._entry = config_entry
 
-    async def async_step_notifications(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             return self.async_create_entry(
                 title="",
@@ -216,7 +216,7 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
             )
 
         return self.async_show_form(
-            step_id="notifications",
+            step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Optional(
