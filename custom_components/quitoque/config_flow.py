@@ -210,6 +210,8 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
                     CONF_NOTIFY_DEADLINE_DAYS: int(user_input.get(CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS)),
                     CONF_NOTIFY_CHANNEL: user_input.get(CONF_NOTIFY_CHANNEL, "persistent"),
                     CONF_NOTIFY_MOBILE_TARGETS: user_input.get(CONF_NOTIFY_MOBILE_TARGETS, []),
+                    CONF_NOTIFY_MOBILE_NEW_MESSAGE: user_input.get(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE),
+                    CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE: user_input.get(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE),
                 },
             )
 
