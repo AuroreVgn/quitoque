@@ -201,6 +201,11 @@ class QuitoqueOptionsFlow(config_entries.OptionsFlow):
                     CONF_NOTIFY_AFTER_SYNC: bool(
                         user_input.get(CONF_NOTIFY_AFTER_SYNC, DEFAULT_NOTIFY_AFTER_SYNC)
                     ),
+                    CONF_NOTIFY_NEW_ORDER: bool(user_input.get(CONF_NOTIFY_NEW_ORDER, False)),
+                    CONF_NOTIFY_BEFORE_DEADLINE: bool(user_input.get(CONF_NOTIFY_BEFORE_DEADLINE, False)),
+                    CONF_NOTIFY_DEADLINE_DAYS: int(user_input.get(CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS)),
+                    CONF_NOTIFY_CHANNEL: user_input.get(CONF_NOTIFY_CHANNEL, "persistent"),
+                    CONF_NOTIFY_MOBILE_TARGETS: user_input.get(CONF_NOTIFY_MOBILE_TARGETS, []),
                 },
             )
 
