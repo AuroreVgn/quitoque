@@ -13,6 +13,10 @@ from .const import (
     CONF_NOTIFY_CHANNEL,
     CONF_NOTIFY_DEADLINE_DAYS,
     CONF_NOTIFY_MOBILE_TARGETS,
+    CONF_NOTIFY_MOBILE_NEW_MESSAGE,
+    CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE,
+    DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE,
+    DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE,
     CONF_NOTIFY_NEW_ORDER,
     DASHBOARD_URL,
     DEFAULT_NOTIFY_DEADLINE_DAYS,
@@ -78,6 +82,7 @@ class QuitoqueOrderNotifications:
                         "Nouvelle sélection Quitoque disponible",
                         f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes.",
                         order.recipes_url,
+                        self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, order, deadline),
                     )
 
             # Only orders still editable may produce a deadline reminder.
@@ -94,6 +99,7 @@ class QuitoqueOrderNotifications:
                         "Quitoque : clôture des recettes",
                         f"La sélection de la box du {order.delivery_date:%d/%m/%Y} clôture le {deadline:%d/%m/%Y} à 23h59. Vérifiez vos recettes.",
                         order.recipes_url,
+                        self._format_mobile(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE, order, deadline),
                     )
 
         if changed:
@@ -104,7 +110,21 @@ class QuitoqueOrderNotifications:
                 "reminded": sorted(self.reminded),
             })
 
-    async def _notify(self, suffix, title, message, url):
+    def _format_mobile(self, option, default, order, deadline):
+        """Replace only documented tokens, preserving other text literally."""
+        template = self._option(option, default)
+        if not isinstance(template, str) or not template.strip():
+            template = default
+        values = {
+            "{delivery_date}": order.delivery_date.strftime("%d/%m/%Y"),
+            "{deadline_date}": deadline.strftime("%d/%m/%Y"),
+            "{order_id}": str(order.order_id),
+        }
+        for token, value in values.items():
+            template = template.replace(token, value)
+        return template
+
+    async def _notify(self, suffix, title, message, url, mobile_message=None):
         if not isinstance(url, str) or not url.startswith("https://www.quitoque.fr/"):
             url = DASHBOARD_URL
         channel = self._option(CONF_NOTIFY_CHANNEL, "persistent")
@@ -137,7 +157,7 @@ class QuitoqueOrderNotifications:
                         target,
                         {
                             "title": title,
-                            "message": message,
+                            "message": mobile_message or message,
                             "data": {"url": url, "clickAction": url},
                         },
                         blocking=True,
