@@ -11,7 +11,12 @@
           "target_calendar": "Calendrier de destination",
           "event_prefix": "Préfixe personnalisé des événements (facultatif)",
           "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
-          "notify_after_sync": "Notifier après la synchronisation"
+          "notify_after_sync": "Notifier après la synchronisation",
+          "notify_new_order": "Notifier lorsqu’une nouvelle commande modifiable est détectée",
+          "notify_before_deadline": "Envoyer un rappel avant la clôture",
+          "notify_deadline_days": "Nombre de jours avant la clôture",
+          "notify_channel": "Canal de notification",
+          "notify_mobile_targets": "Appareils mobiles à notifier"
         },
         "data_description": {
           "notify_after_sync": "Créer une notification Home Assistant lorsque l’ajout des recettes au calendrier est terminé."
@@ -43,7 +48,12 @@
           "target_calendar": "Calendrier de destination",
           "event_prefix": "Préfixe personnalisé des événements (facultatif)",
           "pdf_retention_days": "Conservation des PDF (jours, 0 = ne jamais supprimer)",
-          "notify_after_sync": "Notifier après la synchronisation"
+          "notify_after_sync": "Notifier après la synchronisation",
+          "notify_new_order": "Notifier lorsqu’une nouvelle commande modifiable est détectée",
+          "notify_before_deadline": "Envoyer un rappel avant la clôture",
+          "notify_deadline_days": "Nombre de jours avant la clôture",
+          "notify_channel": "Canal de notification",
+          "notify_mobile_targets": "Appareils mobiles à notifier"
         },
         "description": "L’intégration gère les livraisons de la semaine en cours à 4 semaines (S0 à S+4). S0 et S+1 sont récupérées depuis les box commandées, tandis que S+2 à S+4 proviennent des prochaines box actives. Les recettes sont créées en événements d’une heure le jour de livraison, répartis entre 08 h et 11 h. Le titre conserve le numéro de semaine et peut commencer par un préfixe personnalisé.\n\nLors d’une synchronisation, les box des semaines S0 à S+4 sont importées et les semaines déjà présentes dans le calendrier sont ignorées, même si leurs événements ont été déplacés ailleurs dans l’année. Le bouton de synchronisation est indisponible lorsqu’aucune livraison active n’est prévue.\n\nLes PDF générés sont supprimés automatiquement après le délai de conservation configuré.",
         "data_description": {
