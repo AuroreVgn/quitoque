@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect to Quitoque",
-        "description": "Enter your Quitoque credentials.\n\nThe integration manages deliveries from the current week through 4 weeks ahead (W0 to W+4). W0 and W+1 are read from ordered boxes, while W+2 to W+4 come from active upcoming boxes. Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, boxes from W0 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no delivery is available.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
+        "description": "The integration retrieves deliveries from the current week up to four weeks ahead (W0 to W+4). You can add recipes to your calendar and generate recipe PDFs. Weeks already present in the calendar are not imported again. PDFs are deleted according to your chosen retention period.\n\n🔔 Optional notifications: receive an alert when a new order becomes editable and/or a reminder before recipe selection closes. Choose a reminder period of 1 to 7 days and a delivery method: Home Assistant notification, mobile push, or both. Select mobile devices below. Existing orders do not trigger new-order alerts on first startup.",
         "data": {
           "username": "Email address / username",
           "password": "Password",
@@ -15,11 +15,14 @@
           "notify_new_order": "Notify when a new editable order is detected",
           "notify_before_deadline": "Remind before the deadline",
           "notify_deadline_days": "Days before deadline",
-          "notify_channel": "Notification channel",
+          "notify_channel": "Notification delivery method",
           "notify_mobile_targets": "Mobile devices to notify"
         },
         "data_description": {
-          "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar."
+          "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar.",
+          "notify_channel": "Choose where to receive Quitoque alerts.",
+          "notify_mobile_targets": "Select one or more devices for push notifications.",
+          "notify_deadline_days": "Number of days before the recipe selection deadline."
         }
       },
       "reauth_confirm": {
@@ -52,12 +55,15 @@
           "notify_new_order": "Notify when a new editable order is detected",
           "notify_before_deadline": "Remind before the deadline",
           "notify_deadline_days": "Days before deadline",
-          "notify_channel": "Notification channel",
+          "notify_channel": "Notification delivery method",
           "notify_mobile_targets": "Mobile devices to notify"
         },
-        "description": "The integration manages deliveries from the current week through 4 weeks ahead (W0 to W+4). W0 and W+1 are read from ordered boxes, while W+2 to W+4 come from active upcoming boxes. Recipes are created as one-hour events on the delivery day, spread between 08:00 and 11:00. The title keeps the week number and may start with a custom prefix.\n\nDuring synchronization, boxes from W0 to W+4 are imported and weeks already present in the calendar are skipped, even if their events were moved elsewhere during the year. The synchronization button is unavailable when no delivery is available.\n\nGenerated PDFs are automatically deleted after the configured retention period.",
+        "description": "The integration retrieves deliveries from the current week up to four weeks ahead (W0 to W+4). You can add recipes to your calendar and generate recipe PDFs. Weeks already present in the calendar are not imported again. PDFs are deleted according to your chosen retention period.\n\n🔔 Optional notifications: receive an alert when a new order becomes editable and/or a reminder before recipe selection closes. Choose a reminder period of 1 to 7 days and a delivery method: Home Assistant notification, mobile push, or both. Select mobile devices below. Existing orders do not trigger new-order alerts on first startup.",
         "data_description": {
-          "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar."
+          "notify_after_sync": "Create a Home Assistant notification when recipes have finished being added to the calendar.",
+          "notify_channel": "Choose where to receive Quitoque alerts.",
+          "notify_mobile_targets": "Select one or more devices for push notifications.",
+          "notify_deadline_days": "Number of days before the recipe selection deadline."
         }
       }
     }
