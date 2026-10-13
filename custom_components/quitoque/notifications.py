@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
+import asyncio
 import logging
 
 from homeassistant.helpers.storage import Store
@@ -12,6 +13,8 @@ from .const import (
     CONF_NOTIFY_BEFORE_DEADLINE,
     CONF_NOTIFY_CHANNEL,
     CONF_NOTIFY_DEADLINE_DAYS,
+    CONF_NOTIFY_REMINDER_TIME,
+    DEFAULT_NOTIFY_REMINDER_TIME,
     CONF_NOTIFY_MOBILE_TARGETS,
     CONF_NOTIFY_MOBILE_NEW_MESSAGE,
     CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE,
@@ -37,6 +40,7 @@ class QuitoqueOrderNotifications:
         self.initialized = False
         self.seen: set[str] = set()
         self.reminded: set[str] = set()
+        self._lock = asyncio.Lock()
 
     async def _load(self):
         if self.loaded:
@@ -60,6 +64,10 @@ class QuitoqueOrderNotifications:
 
     async def process(self, orders):
         """Evaluate successful polls; seed existing orders silently on first run."""
+        async with self._lock:
+            await self._process_locked(orders)
+
+    async def _process_locked(self, orders):
         await self._load()
         now = dt_util.now()
         first_poll = not self.initialized
@@ -69,6 +77,13 @@ class QuitoqueOrderNotifications:
         ))))
         new_enabled = bool(self._option(CONF_NOTIFY_NEW_ORDER, False))
         deadline_enabled = bool(self._option(CONF_NOTIFY_BEFORE_DEADLINE, False))
+        raw_time = str(self._option(CONF_NOTIFY_REMINDER_TIME, DEFAULT_NOTIFY_REMINDER_TIME))
+        try:
+            reminder_time = time.fromisoformat(raw_time)
+        except ValueError:
+            reminder_time = time(8, 0)
+        zone = dt_util.get_time_zone(self.hass.config.time_zone)
+        french = (self.hass.config.language or 'en').lower().startswith('fr')
 
         for order in orders:
             key = str(order.order_id)
@@ -79,27 +94,28 @@ class QuitoqueOrderNotifications:
                 if not first_poll and new_enabled and now < deadline:
                     await self._notify(
                         f"new_{key}",
-                        "Nouvelle sélection Quitoque disponible",
-                        f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes.",
+                        "Nouvelle sélection Quitoque disponible" if french else "New Quitoque recipe selection available",
+                        (f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes." if french else f"Your box for {order.delivery_date:%d/%m/%Y} is now editable. Choose your recipes."),
                         order.recipes_url,
-                        self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, order, deadline),
+                        self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, order, deadline, french),
                     )
 
             # Only orders still editable may produce a deadline reminder.
             if now >= deadline or order.delivery_date < now.date():
                 continue
             reminder_key = f"{key}:{days}"
-            if deadline_enabled and reminder_key not in self.reminded and now >= deadline - timedelta(days=days):
+            scheduled_at = datetime.combine(deadline.date() - timedelta(days=days), reminder_time, tzinfo=zone)
+            if deadline_enabled and reminder_key not in self.reminded and now >= scheduled_at:
                 # A first poll never sends alerts, including overdue reminders.
                 self.reminded.add(reminder_key)
                 changed = True
                 if not first_poll:
                     await self._notify(
                         f"deadline_{key}_{days}",
-                        "Quitoque : clôture des recettes",
-                        f"La sélection de la box du {order.delivery_date:%d/%m/%Y} clôture le {deadline:%d/%m/%Y} à 23h59. Vérifiez vos recettes.",
+                        "Quitoque : clôture des recettes" if french else "Quitoque: recipe selection deadline",
+                        (f"La sélection de la box du {order.delivery_date:%d/%m/%Y} clôture le {deadline:%d/%m/%Y} à 23h59. Vérifiez vos recettes." if french else f"Recipe selection for your {order.delivery_date:%d/%m/%Y} box closes on {deadline:%d/%m/%Y} at 23:59. Check your recipes."),
                         order.recipes_url,
-                        self._format_mobile(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE, order, deadline),
+                        self._format_mobile(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE, order, deadline, french),
                     )
 
         if changed:
@@ -110,11 +126,14 @@ class QuitoqueOrderNotifications:
                 "reminded": sorted(self.reminded),
             })
 
-    def _format_mobile(self, option, default, order, deadline):
+    def _format_mobile(self, option, default, order, deadline, french):
         """Replace only documented tokens, preserving other text literally."""
         template = self._option(option, default)
+        english_default = ("Your box for {delivery_date} is now editable. Choose your recipes!" if option == CONF_NOTIFY_MOBILE_NEW_MESSAGE else "Your box for {delivery_date} closes on {deadline_date} at 23:59. Check your recipes!")
+        if not french and template == default:
+            template = english_default
         if not isinstance(template, str) or not template.strip():
-            template = default
+            template = default if french else english_default
         values = {
             "{delivery_date}": order.delivery_date.strftime("%d/%m/%Y"),
             "{deadline_date}": deadline.strftime("%d/%m/%Y"),
@@ -128,6 +147,7 @@ class QuitoqueOrderNotifications:
         if not isinstance(url, str) or not url.startswith("https://www.quitoque.fr/"):
             url = DASHBOARD_URL
         channel = self._option(CONF_NOTIFY_CHANNEL, "persistent")
+        link_label = "Modifier ma box" if (self.hass.config.language or "en").lower().startswith("fr") else "Edit my box"
         if channel in ("persistent", "both"):
             try:
                 await self.hass.services.async_call(
@@ -135,7 +155,7 @@ class QuitoqueOrderNotifications:
                     "create",
                     {
                         "title": title,
-                        "message": f"{message}\n\n[Modifier ma box]({url})",
+                        "message": f"{message}\n\n[{link_label}]({url})",
                         "notification_id": f"quitoque_{self.entry.entry_id}_{suffix}",
                     },
                     blocking=True,
