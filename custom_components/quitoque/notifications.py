@@ -55,7 +55,7 @@ class QuitoqueOrderNotifications:
         self.loaded = True
 
     def _option(self, key, default):
-        return self.entry.options.get(key, self.entry.data.get(key, default))
+        return self.entry.options.get(key, self.entry.data.get(key, self.entry.options.get("notify_reminder_time", self.entry.data.get("notify_reminder_time", default)))) if key == CONF_NOTIFY_REMINDER_TIME else self.entry.options.get(key, self.entry.data.get(key, default))
 
     def _deadline(self, order):
         """Provisional observed rule: delivery minus six days at 23:59."""
