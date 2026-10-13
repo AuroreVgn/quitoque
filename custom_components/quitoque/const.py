@@ -13,6 +13,7 @@ CONF_NOTIFY_AFTER_SYNC = "notify_after_sync"
 CONF_NOTIFY_NEW_ORDER = "notify_new_order"
 CONF_NOTIFY_BEFORE_DEADLINE = "notify_before_deadline"
 CONF_NOTIFY_DEADLINE_DAYS = "notify_deadline_days"
+CONF_NOTIFY_REMINDER_TIME = "notify_reminder_time"
 CONF_NOTIFY_CHANNEL = "notify_channel"
 CONF_NOTIFY_MOBILE_TARGETS = "notify_mobile_targets"
 CONF_NOTIFY_MOBILE_NEW_MESSAGE = "notify_mobile_new_message"
@@ -27,6 +28,7 @@ DEFAULT_EVENT_DURATION = 60
 DEFAULT_PDF_RETENTION_DAYS = 7
 DEFAULT_NOTIFY_AFTER_SYNC = False
 DEFAULT_NOTIFY_DEADLINE_DAYS = 3
+DEFAULT_NOTIFY_REMINDER_TIME = "08:00:00"
 DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE = "Votre box du {delivery_date} est maintenant modifiable. Choisissez vos recettes !"
 DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE = "Votre box du {delivery_date} sera clôturée le {deadline_date} à 23h59. Vérifiez vos recettes !"
 
