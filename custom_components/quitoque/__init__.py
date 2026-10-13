@@ -211,6 +211,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: QuitoqueConfigEntry) -> 
         await session.close()
         raise
     entry.runtime_data = QuitoqueRuntimeData(coordinator, session)
+
+    # Check due reminders every minute, independently of the six-hour API poll.
+    async def _check_order_reminders(_now) -> None:
+        if coordinator.orders:
+            await coordinator.order_notifications.process(coordinator.orders)
+
+    entry.async_on_unload(
+        async_track_time_interval(hass, _check_order_reminders, timedelta(minutes=1))
+    )
+
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
 
     await _async_cleanup_pdfs(hass, entry)
