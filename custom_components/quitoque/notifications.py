@@ -7,6 +7,7 @@ import asyncio
 import logging
 
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -41,6 +42,7 @@ class QuitoqueOrderNotifications:
         self.seen: set[str] = set()
         self.reminded: set[str] = set()
         self._lock = asyncio.Lock()
+        self._scheduled_reminders = []
 
     async def _load(self):
         if self.loaded:
@@ -66,6 +68,7 @@ class QuitoqueOrderNotifications:
         """Evaluate successful polls; seed existing orders silently on first run."""
         async with self._lock:
             await self._process_locked(orders)
+            self._schedule_reminders(orders)
 
     async def _process_locked(self, orders):
         await self._load()
@@ -125,6 +128,49 @@ class QuitoqueOrderNotifications:
                 "seen": sorted(self.seen),
                 "reminded": sorted(self.reminded),
             })
+
+    def cancel_scheduled_reminders(self):
+        """Cancel pending callbacks on reload or unload."""
+        for cancel in self._scheduled_reminders:
+            cancel()
+        self._scheduled_reminders.clear()
+
+    def _schedule_reminders(self, orders):
+        """Schedule one-shot callbacks, without polling or additional API calls."""
+        self.cancel_scheduled_reminders()
+        if not self._option(CONF_NOTIFY_BEFORE_DEADLINE, False):
+            return
+
+        now = dt_util.now()
+        zone = dt_util.get_time_zone(self.hass.config.time_zone)
+        days = max(1, min(7, int(self._option(
+            CONF_NOTIFY_DEADLINE_DAYS, DEFAULT_NOTIFY_DEADLINE_DAYS
+        ))))
+        try:
+            reminder_time = time.fromisoformat(str(
+                self._option(CONF_NOTIFY_REMINDER_TIME, DEFAULT_NOTIFY_REMINDER_TIME)
+            ))
+        except ValueError:
+            reminder_time = time(8, 0)
+
+        for order in orders:
+            deadline = self._deadline(order)
+            reminder_key = f"{order.order_id}:{days}"
+            if reminder_key in self.reminded or now >= deadline:
+                continue
+            scheduled_at = datetime.combine(
+                deadline.date() - timedelta(days=days), reminder_time, tzinfo=zone
+            )
+            if scheduled_at <= now:
+                # Overdue reminders are handled by process() on startup/refresh.
+                continue
+
+            async def _send_reminder(_now, current_orders=orders):
+                await self.process(current_orders)
+
+            self._scheduled_reminders.append(
+                async_track_point_in_time(self.hass, _send_reminder, scheduled_at)
+            )
 
     def _format_mobile(self, option, default, order, deadline, french):
         """Replace only documented tokens, preserving other text literally."""
