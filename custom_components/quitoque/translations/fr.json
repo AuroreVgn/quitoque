@@ -19,7 +19,9 @@
           "notify_mobile_targets": "Téléphones et tablettes à notifier",
           "notify_mobile_new_message": "Texte du push : nouvelle box",
           "notify_mobile_deadline_message": "Texte du push : rappel",
-          "reminder_send_time": "Heure d'envoi du rappel"
+          "reminder_send_time": "Heure d'envoi du rappel",
+          "notify_new_title": "Titre : nouvelle box",
+          "notify_deadline_title": "Titre : rappel de clôture"
         },
         "data_description": {
           "notify_after_sync": "Notification Home Assistant à la fin de l'import des recettes dans le calendrier. Indépendante des alertes de commandes.",
@@ -30,7 +32,9 @@
           "notify_mobile_deadline_message": "Personnalisez le texte de la notification. Variables utilisables dans le message : date de livraison (delivery_date), date limite (deadline_date) et identifiant de commande (order_id).",
           "notify_new_order": "Alerte lorsqu'une nouvelle commande devient disponible pour choisir les recettes. Pas d'alerte pour les commandes déjà présentes au premier démarrage.",
           "notify_before_deadline": "Envoie un rappel avant la date limite estimée pour modifier les recettes de la box.",
-          "reminder_send_time": "Heure locale de Home Assistant (par défaut 08:00). Exemple : 3 jours avant la clôture, à 08:00."
+          "reminder_send_time": "Heure locale de Home Assistant (par défaut 08:00). Exemple : 3 jours avant la clôture, à 08:00.",
+          "notify_new_title": "Titre personnalisé des notifications Home Assistant et mobiles. Variables : (delivery_date), (deadline_date), (order_id).",
+          "notify_deadline_title": "Titre personnalisé des notifications Home Assistant et mobiles. Variables : (delivery_date), (deadline_date), (order_id)."
         }
       },
       "reauth_confirm": {
@@ -67,7 +71,9 @@
           "notify_mobile_targets": "Téléphones et tablettes à notifier",
           "notify_mobile_new_message": "Texte du push : nouvelle box",
           "notify_mobile_deadline_message": "Texte du push : rappel",
-          "reminder_send_time": "Heure d'envoi du rappel"
+          "reminder_send_time": "Heure d'envoi du rappel",
+          "notify_new_title": "Titre : nouvelle box",
+          "notify_deadline_title": "Titre : rappel de clôture"
         },
         "description": "**Notifications Quitoque**\n\n• **Nouvelle box modifiable** : une alerte est envoyée lorsqu'une nouvelle commande devient disponible pour choisir les recettes (pas d'alerte initiale pour les commandes déjà connues).\n• **Rappel de clôture** : une alerte est envoyée de 1 à 7 jours avant la date limite estimée, fixée provisoirement à 6 jours avant la livraison, à 23h59.\n• **Envoi** : notifications Home Assistant, mobiles ou les deux. Les messages push sont personnalisables avec date de livraison, date limite et identifiant de commande.\n\n**Autres options** : import des recettes au calendrier (S0 à S+4), génération de PDF et durée de conservation.",
         "data_description": {
@@ -79,7 +85,9 @@
           "notify_mobile_deadline_message": "Personnalisez le texte de la notification. Variables utilisables dans le message : date de livraison (delivery_date), date limite (deadline_date) et identifiant de commande (order_id).",
           "notify_new_order": "Alerte lorsqu'une nouvelle commande devient disponible pour choisir les recettes. Pas d'alerte pour les commandes déjà présentes au premier démarrage.",
           "notify_before_deadline": "Envoie un rappel avant la date limite estimée pour modifier les recettes de la box.",
-          "reminder_send_time": "Heure locale de Home Assistant (par défaut 08:00). Exemple : 3 jours avant la clôture, à 08:00."
+          "reminder_send_time": "Heure locale de Home Assistant (par défaut 08:00). Exemple : 3 jours avant la clôture, à 08:00.",
+          "notify_new_title": "Titre personnalisé des notifications Home Assistant et mobiles. Variables : (delivery_date), (deadline_date), (order_id).",
+          "notify_deadline_title": "Titre personnalisé des notifications Home Assistant et mobiles. Variables : (delivery_date), (deadline_date), (order_id)."
         }
       }
     }
