@@ -17,6 +17,10 @@ from .const import (
     CONF_NOTIFY_REMINDER_TIME,
     DEFAULT_NOTIFY_REMINDER_TIME,
     CONF_NOTIFY_MOBILE_TARGETS,
+    CONF_NOTIFY_NEW_TITLE,
+    CONF_NOTIFY_DEADLINE_TITLE,
+    DEFAULT_NOTIFY_NEW_TITLE,
+    DEFAULT_NOTIFY_DEADLINE_TITLE,
     CONF_NOTIFY_MOBILE_NEW_MESSAGE,
     CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE,
     DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE,
@@ -97,7 +101,7 @@ class QuitoqueOrderNotifications:
                 if not first_poll and new_enabled and now < deadline:
                     await self._notify(
                         f"new_{key}",
-                        "Nouvelle sélection Quitoque disponible" if french else "New Quitoque recipe selection available",
+                        self._format_title(CONF_NOTIFY_NEW_TITLE, DEFAULT_NOTIFY_NEW_TITLE, "New Quitoque recipe selection available", order, deadline, french),
                         (f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes." if french else f"Your box for {order.delivery_date:%d/%m/%Y} is now editable. Choose your recipes."),
                         order.recipes_url,
                         self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, order, deadline, french),
@@ -115,7 +119,7 @@ class QuitoqueOrderNotifications:
                 if not first_poll:
                     await self._notify(
                         f"deadline_{key}_{days}",
-                        "Quitoque : clôture des recettes" if french else "Quitoque: recipe selection deadline",
+                        self._format_title(CONF_NOTIFY_DEADLINE_TITLE, DEFAULT_NOTIFY_DEADLINE_TITLE, "Quitoque: recipe selection deadline", order, deadline, french),
                         (f"La sélection de la box du {order.delivery_date:%d/%m/%Y} clôture le {deadline:%d/%m/%Y} à 23h59. Vérifiez vos recettes." if french else f"Recipe selection for your {order.delivery_date:%d/%m/%Y} box closes on {deadline:%d/%m/%Y} at 23:59. Check your recipes."),
                         order.recipes_url,
                         self._format_mobile(CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE, DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE, order, deadline, french),
@@ -171,6 +175,21 @@ class QuitoqueOrderNotifications:
             self._scheduled_reminders.append(
                 async_track_point_in_time(self.hass, _send_reminder, scheduled_at)
             )
+
+    def _format_title(self, option, default, english_default, order, deadline, french):
+        """Format custom notification titles."""
+        template = self._option(option, default)
+        if not isinstance(template, str) or not template.strip():
+            template = default
+        if not french and template == default:
+            template = english_default
+        for token, value in {
+            "{delivery_date}": order.delivery_date.strftime("%d/%m/%Y"),
+            "{deadline_date}": deadline.strftime("%d/%m/%Y"),
+            "{order_id}": str(order.order_id),
+        }.items():
+            template = template.replace(token, value)
+        return template
 
     def _format_mobile(self, option, default, order, deadline, french):
         """Replace only documented tokens, preserving other text literally."""
