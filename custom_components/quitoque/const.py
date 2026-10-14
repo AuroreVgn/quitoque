@@ -16,6 +16,8 @@ CONF_NOTIFY_DEADLINE_DAYS = "notify_deadline_days"
 CONF_NOTIFY_REMINDER_TIME = "reminder_send_time"
 CONF_NOTIFY_CHANNEL = "notify_channel"
 CONF_NOTIFY_MOBILE_TARGETS = "notify_mobile_targets"
+CONF_NOTIFY_NEW_TITLE = "notify_new_title"
+CONF_NOTIFY_DEADLINE_TITLE = "notify_deadline_title"
 CONF_NOTIFY_MOBILE_NEW_MESSAGE = "notify_mobile_new_message"
 CONF_NOTIFY_MOBILE_DEADLINE_MESSAGE = "notify_mobile_deadline_message"
 CONF_EVENT_START = "event_start"
@@ -29,6 +31,8 @@ DEFAULT_PDF_RETENTION_DAYS = 7
 DEFAULT_NOTIFY_AFTER_SYNC = False
 DEFAULT_NOTIFY_DEADLINE_DAYS = 3
 DEFAULT_NOTIFY_REMINDER_TIME = "08:00:00"
+DEFAULT_NOTIFY_NEW_TITLE = "Nouvelle sélection Quitoque disponible"
+DEFAULT_NOTIFY_DEADLINE_TITLE = "Quitoque : clôture des recettes"
 DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE = "Votre box du {delivery_date} est maintenant modifiable. Choisissez vos recettes !"
 DEFAULT_NOTIFY_MOBILE_DEADLINE_MESSAGE = "Votre box du {delivery_date} sera clôturée le {deadline_date} à 23h59. Vérifiez vos recettes !"
 
