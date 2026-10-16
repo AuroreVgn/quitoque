@@ -44,6 +44,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
         )
         self.client = client
         self.order_notifications = QuitoqueOrderNotifications(hass, entry)
+        self.order_notifications.refresh_orders = self.async_request_refresh
         self._entry = entry
         self.orders: tuple[QuitoqueOrder, ...] = ()
         self.operation_in_progress = False
