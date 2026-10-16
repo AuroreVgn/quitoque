@@ -44,6 +44,7 @@ class QuitoqueOrderNotifications:
         self.loaded = False
         self.initialized = False
         self.seen: set[str] = set()
+        self.editable_seen: set[str] = set()
         self.reminded: set[str] = set()
         self._lock = asyncio.Lock()
         self._scheduled_reminders = []
@@ -54,6 +55,7 @@ class QuitoqueOrderNotifications:
         saved = await self.store.async_load()
         if isinstance(saved, dict):
             self.seen = {str(x) for x in saved.get("seen", [])}
+            self.editable_seen = {str(x) for x in saved.get("editable_seen", saved.get("seen", []))}
             self.reminded = {str(x) for x in saved.get("reminded", [])}
             self.initialized = bool(saved.get("initialized", False))
         self.loaded = True
@@ -96,9 +98,9 @@ class QuitoqueOrderNotifications:
         # Track only boxes with an explicit editing countdown, not every order.
         for box_id, delivery_date, recipes_url in editable_boxes:
             key = str(box_id)
-            if key in self.seen:
+            if key in self.editable_seen:
                 continue
-            self.seen.add(key)
+            self.editable_seen.add(key)
             changed = True
             deadline = datetime.combine(
                 delivery_date - timedelta(days=6), time(23, 59), tzinfo=zone
@@ -141,6 +143,7 @@ class QuitoqueOrderNotifications:
             await self.store.async_save({
                 "initialized": True,
                 "seen": sorted(self.seen),
+                "editable_seen": sorted(self.editable_seen),
                 "reminded": sorted(self.reminded),
             })
 
