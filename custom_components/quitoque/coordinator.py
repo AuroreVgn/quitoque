@@ -319,7 +319,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
         try:
             self.orders = await self.client.async_get_orders()
             await self._async_update_recipe_metadata(self.orders)
-            await self.order_notifications.process(self.orders)
+            await self.order_notifications.process(self.orders, getattr(self.client, 'editable_boxes', ()))
             return self.orders[0] if self.orders else None
         except QuitoqueAuthenticationError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
