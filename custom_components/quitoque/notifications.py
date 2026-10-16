@@ -68,13 +68,13 @@ class QuitoqueOrderNotifications:
             order.delivery_date - timedelta(days=6), time(23, 59), tzinfo=zone
         )
 
-    async def process(self, orders):
+    async def process(self, orders, editable_boxes=()):
         """Evaluate successful polls; seed existing orders silently on first run."""
         async with self._lock:
-            await self._process_locked(orders)
+            await self._process_locked(orders, editable_boxes)
             self._schedule_reminders(orders)
 
-    async def _process_locked(self, orders):
+    async def _process_locked(self, orders, editable_boxes):
         await self._load()
         now = dt_util.now()
         first_poll = not self.initialized
@@ -92,21 +92,32 @@ class QuitoqueOrderNotifications:
         zone = dt_util.get_time_zone(self.hass.config.time_zone)
         french = (self.hass.config.language or 'en').lower().startswith('fr')
 
+        # Dashboard editability is independent of the pause/delivery switch.
+        # Track only boxes with an explicit editing countdown, not every order.
+        for box_id, delivery_date, recipes_url in editable_boxes:
+            key = str(box_id)
+            if key in self.seen:
+                continue
+            self.seen.add(key)
+            changed = True
+            deadline = datetime.combine(
+                delivery_date - timedelta(days=6), time(23, 59), tzinfo=zone
+            )
+            if first_poll or not new_enabled or now >= deadline:
+                continue
+            from types import SimpleNamespace
+            box = SimpleNamespace(order_id=box_id, delivery_date=delivery_date)
+            await self._notify(
+                f"new_{key}",
+                self._format_title(CONF_NOTIFY_NEW_TITLE, DEFAULT_NOTIFY_NEW_TITLE, "New Quitoque recipe selection available", box, deadline, french),
+                (f"La box du {delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes." if french else f"Your box for {delivery_date:%d/%m/%Y} is now editable. Choose your recipes."),
+                recipes_url,
+                self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, box, deadline, french),
+            )
+
         for order in orders:
             key = str(order.order_id)
             deadline = self._deadline(order)
-            if key not in self.seen:
-                self.seen.add(key)
-                changed = True
-                if not first_poll and new_enabled and now < deadline:
-                    await self._notify(
-                        f"new_{key}",
-                        self._format_title(CONF_NOTIFY_NEW_TITLE, DEFAULT_NOTIFY_NEW_TITLE, "New Quitoque recipe selection available", order, deadline, french),
-                        (f"La box du {order.delivery_date:%d/%m/%Y} est modifiable. Pensez à choisir vos recettes." if french else f"Your box for {order.delivery_date:%d/%m/%Y} is now editable. Choose your recipes."),
-                        order.recipes_url,
-                        self._format_mobile(CONF_NOTIFY_MOBILE_NEW_MESSAGE, DEFAULT_NOTIFY_MOBILE_NEW_MESSAGE, order, deadline, french),
-                    )
-
             # Only orders still editable may produce a deadline reminder.
             if now >= deadline or order.delivery_date < now.date():
                 continue
