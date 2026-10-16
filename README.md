@@ -328,9 +328,23 @@ Le contrôle ne repose pas uniquement sur la date actuelle de l'événement : un
 
 ## 📅 Utilisation avec Google Calendar
 
-L'intégration écrit dans une entité `calendar` Home Assistant. Elle peut donc utiliser un calendrier Google dès lors que celui-ci est exposé dans Home Assistant par l'intégration Google Calendar et qu'il accepte la création d'événements.
+Quitoque peut ajouter les livraisons et les recettes à un calendrier Google **via Home Assistant**. Il n'est pas nécessaire de connecter Quitoque directement à Google : le calendrier doit simplement être accessible dans Home Assistant et autoriser la création d'événements.
 
-Il suffit de sélectionner ce calendrier dans le champ **Calendrier de destination** lors de la configuration de Quitoque.
+### Configuration pas à pas
+
+1. Dans Home Assistant, installer et configurer l'intégration **[Google Calendar](https://www.home-assistant.io/integrations/google/)** en suivant sa documentation officielle.
+2. Vérifier que le calendrier Google souhaité apparaît dans Home Assistant sous la forme d'une entité `calendar` et que la création d'événements est autorisée.
+3. Ouvrir **Paramètres → Appareils et services → Quitoque → Configurer**.
+4. Dans **Calendrier de destination**, sélectionner l'entité du calendrier Google.
+5. Utiliser le bouton **Ajouter les recettes au calendrier** de l'intégration Quitoque (ou l'action `quitoque.sync_calendar`).
+6. Ouvrir **[Google Calendar](https://calendar.google.com/)** et vérifier les événements créés : la livraison sur la journée entière et les recettes sous forme d'événements d'une heure.
+
+> [!NOTE]
+> - La synchronisation vers Google Calendar passe par Home Assistant et est déclenchée par le bouton ou l'action Quitoque : **elle n'est pas continue par défaut**. Pour la lancer automatiquement, il est possible de créer une automatisation Home Assistant appelant `quitoque.sync_calendar`.
+> - La protection anti-doublon de Quitoque empêche de réimporter une semaine déjà enregistrée, même si ses événements ont été déplacés manuellement dans le calendrier.
+> - Si le calendrier n'apparaît pas dans la liste, vérifier qu'il est bien exposé par l'intégration Google Calendar et qu'il prend en charge la création d'événements.
+
+**Liens utiles :** [Documentation Google Calendar pour Home Assistant](https://www.home-assistant.io/integrations/google/) · [Ouvrir Google Calendar](https://calendar.google.com/)
 
 ## 📄 PDF des recettes
 
