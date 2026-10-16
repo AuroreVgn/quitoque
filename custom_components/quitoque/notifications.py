@@ -48,6 +48,7 @@ class QuitoqueOrderNotifications:
         self.reminded: set[str] = set()
         self._lock = asyncio.Lock()
         self._scheduled_reminders = []
+        self.refresh_orders = None
 
     async def _load(self):
         if self.loaded:
@@ -55,7 +56,7 @@ class QuitoqueOrderNotifications:
         saved = await self.store.async_load()
         if isinstance(saved, dict):
             self.seen = {str(x) for x in saved.get("seen", [])}
-            self.editable_seen = {str(x) for x in saved.get("editable_seen", saved.get("seen", []))}
+            self.editable_seen = {str(x) for x in saved.get("editable_seen", [])}
             self.reminded = {str(x) for x in saved.get("reminded", [])}
             self.initialized = bool(saved.get("initialized", False))
         self.loaded = True
@@ -183,8 +184,10 @@ class QuitoqueOrderNotifications:
                 # Overdue reminders are handled by process() on startup/refresh.
                 continue
 
-            async def _send_reminder(_now, current_orders=orders):
-                await self.process(current_orders)
+            async def _send_reminder(_now):
+                # Refresh the dashboard so a newly paused box cannot receive a reminder.
+                if self.refresh_orders is not None:
+                    await self.refresh_orders()
 
             self._scheduled_reminders.append(
                 async_track_point_in_time(self.hass, _send_reminder, scheduled_at)
