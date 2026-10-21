@@ -8,12 +8,12 @@
   "documentation": "https://github.com/AuroreVgn/quitoque",
   "integration_type": "service",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/AuroreVgn/quitoque/issues",
   "loggers": [
     "custom_components.quitoque"
   ],
-  "version": "1.4.1",
   "requirements": [
     "reportlab==4.4.9"
   ],
-  "issue_tracker": "https://github.com/AuroreVgn/quitoque/issues"
+  "version": "1.4.1"
 }
