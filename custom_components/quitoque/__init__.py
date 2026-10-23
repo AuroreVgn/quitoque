@@ -211,6 +211,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: QuitoqueConfigEntry) -> 
         await session.close()
         raise
     entry.runtime_data = QuitoqueRuntimeData(coordinator, session)
+
+    # Cancel scheduled one-shot reminder callbacks when unloading or reloading.
+    entry.async_on_unload(coordinator.order_notifications.cancel_scheduled_reminders)
+
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
 
     await _async_cleanup_pdfs(hass, entry)

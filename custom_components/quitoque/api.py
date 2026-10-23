@@ -114,6 +114,77 @@ class _ActiveWeeksParser(HTMLParser):
             self.active_weeks.add(week)
 
 
+class _EditableBoxParser(HTMLParser):
+    """Read editable dashboard boxes regardless of their delivery switch."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.depth = 0
+        self.widget_depth = None
+        self.current = None
+        self.capture_status = False
+        self.status_parts = []
+        self.boxes = []
+        self.in_paragraph = False
+        self.paragraph_parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "div":
+            self.depth += 1
+            match = re.fullmatch(r"order-widget-(\d+)", attrs.get("id", ""))
+            if self.widget_depth is None and match:
+                self.widget_depth = self.depth
+                self.current = {"order_id": int(match.group(1)), "url": None, "status": "", "weekday": None}
+        if self.current is None:
+            return
+        if tag == "p":
+            self.in_paragraph = True
+            self.paragraph_parts = []
+        if tag == "a":
+            href = attrs.get("href", "")
+            if _RECIPE_URL_RE.search('href="' + href + '"'):
+                self.current["url"] = urljoin(BASE_URL, href)
+        if tag == "span" and self.widget_depth is not None:
+            self.capture_status = True
+            self.status_parts = []
+
+    def handle_data(self, data):
+        if self.in_paragraph:
+            self.paragraph_parts.append(data)
+        if self.capture_status:
+            self.status_parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "p" and self.in_paragraph:
+            label = " ".join("".join(self.paragraph_parts).split()).lower()
+            if re.search(r"plus que\s+\d+\s+jours?\s+pour\s+modifier", label, re.I):
+                self.current["status"] = label
+            # Quitoque displays the actual delivery weekday in the widget.
+            for name, weekday in (
+                ("lundi", 0), ("mardi", 1), ("mercredi", 2),
+                ("jeudi", 3), ("vendredi", 4), ("samedi", 5), ("dimanche", 6),
+            ):
+                if re.search(r"\b" + name + r"\b", label):
+                    self.current["weekday"] = weekday
+                    break
+            self.in_paragraph = False
+        if tag == "span" and self.capture_status:
+            status = " ".join(self.status_parts).strip()
+            if re.search(r"(?:plus que\s+\d+\s+jours?\s+pour\s+modifier|modifier\s+(?:mes|vos|les)\s+recettes)", status, re.I):
+                self.current["status"] = status
+            self.capture_status = False
+        if tag == "div":
+            if self.widget_depth == self.depth and self.current is not None:
+                if self.current["url"] and self.current["status"]:
+                    match = _RECIPE_URL_RE.search('href="' + self.current["url"].replace(BASE_URL, "") + '"')
+                    if match:
+                        self.boxes.append((self.current["order_id"], date.fromisoformat(match.group("start")) + timedelta(days=self.current["weekday"] if self.current["weekday"] is not None else 3), self.current["url"]))
+                self.current = None
+                self.widget_depth = None
+            self.depth -= 1
+
+
 @dataclass(frozen=True, slots=True)
 class _HistoricalOrderCard:
     """One order card from Quitoque's ordered-box history."""
@@ -1995,6 +2066,11 @@ class QuitoqueClient:
         if self._looks_like_login_page(html, final_url):
             self._authenticated = False
             raise QuitoqueAuthenticationError("La session Quitoque a expiré")
+
+        editable_parser = _EditableBoxParser()
+        editable_parser.feed(html)
+        self.editable_boxes = tuple(editable_parser.boxes)
+        _LOGGER.debug("Box avec recettes modifiables : %s", [(box[0], box[1].isoformat()) for box in self.editable_boxes])
 
         active_parser = _ActiveWeeksParser()
         active_parser.feed(html)

@@ -45,6 +45,8 @@ Si cette intégration vous est utile et que vous souhaitez soutenir son dévelop
 
 <a name="toc-section-1"></a>
 
+<a name="toc-section-1"></a>
+
 ## ⚠️ Important
 Intégration personnalisée **Home Assistant** permettant de récupérer les prochaines recettes d'un compte **Quitoque**, de suivre les livraisons de **S0 à S+4**, de les ajouter à un calendrier Home Assistant (ou Google), de générer les fiches recettes en PDF et d'afficher les informations dans un **dashboard dédié** ou une **carte Lovelace Quitoque**.
 
