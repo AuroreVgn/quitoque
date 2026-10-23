@@ -115,81 +115,53 @@ class _ActiveWeeksParser(HTMLParser):
 
 
 class _EditableBoxParser(HTMLParser):
-    """Find dashboard boxes whose recipe selection is currently open.
-
-    The countdown is text in a <p>, not the nested icon <span>.
-    Delivery pause switches are intentionally ignored for this detection.
-    """
-
-    _EDITABLE_RE = re.compile(
-        r"plus que\\s+\\d+\\s+jours?\\s+pour\\s+modifier|"
-        r"modifier\\s+(?:mes|vos|les)\\s+recettes",
-        re.I,
-    )
+    """Read editable dashboard boxes regardless of their delivery switch."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.depth = 0
-        self.widget_depth: int | None = None
-        self.current: dict | None = None
-        self.paragraph_depth = 0
-        self.paragraph_parts: list[str] = []
-        self.boxes: list[tuple[int, date, str]] = []
+        self.widget_depth = None
+        self.current = None
+        self.capture_status = False
+        self.status_parts = []
+        self.boxes = []
 
     def handle_starttag(self, tag, attrs):
-        attributes = dict(attrs)
+        attrs = dict(attrs)
         if tag == "div":
             self.depth += 1
-            match = re.fullmatch(r"order-widget-(\\d+)", attributes.get("id") or "")
+            match = re.fullmatch(r"order-widget-(\d+)", attrs.get("id", ""))
             if self.widget_depth is None and match:
                 self.widget_depth = self.depth
-                self.current = {
-                    "order_id": int(match.group(1)),
-                    "url": None,
-                    "editable": False,
-                    "weekday": None,
-                }
+                self.current = {"order_id": int(match.group(1)), "url": None, "status": ""}
         if self.current is None:
             return
         if tag == "a":
-            href = attributes.get("href") or ""
-            if _RECIPE_URL_RE.search(f'href="{href}"'):
+            href = attrs.get("href", "")
+            if _RECIPE_URL_RE.search('href="' + href + '"'):
                 self.current["url"] = urljoin(BASE_URL, href)
-        if tag == "p":
-            self.paragraph_depth += 1
-            if self.paragraph_depth == 1:
-                self.paragraph_parts = []
+        if tag == "span" and self.widget_depth is not None:
+            self.capture_status = True
+            self.status_parts = []
 
     def handle_data(self, data):
-        if self.current is not None and self.paragraph_depth:
-            self.paragraph_parts.append(data)
+        if self.capture_status:
+            self.status_parts.append(data)
 
     def handle_endtag(self, tag):
-        if tag == "p" and self.paragraph_depth:
-            self.paragraph_depth -= 1
-            if self.paragraph_depth == 0 and self.current is not None:
-                text = " ".join("".join(self.paragraph_parts).split())
-                if self._EDITABLE_RE.search(text):
-                    self.current["editable"] = True
-                if re.search(r"\\bmercredi\\b", text, re.I):
-                    self.current["weekday"] = 2
-                elif re.search(r"\\bjeudi\\b", text, re.I):
-                    self.current["weekday"] = 3
+        if tag == "span" and self.capture_status:
+            status = " ".join(self.status_parts).strip()
+            if re.search(r"(?:plus que\s+\d+\s+jours?\s+pour\s+modifier|modifier\s+(?:mes|vos|les)\s+recettes)", status, re.I):
+                self.current["status"] = status
+            self.capture_status = False
         if tag == "div":
             if self.widget_depth == self.depth and self.current is not None:
-                url = self.current["url"]
-                if url and self.current["editable"]:
-                    relative = url.removeprefix(BASE_URL)
-                    match = _RECIPE_URL_RE.search(f'href="{relative}"')
+                if self.current["url"] and self.current["status"]:
+                    match = _RECIPE_URL_RE.search('href="' + self.current["url"].replace(BASE_URL, "") + '"')
                     if match:
-                        start = date.fromisoformat(match.group("start"))
-                        weekday = self.current["weekday"]
-                        delivery = start + timedelta(days=weekday if weekday is not None else 3)
-                        self.boxes.append((self.current["order_id"], delivery, url))
+                        self.boxes.append((self.current["order_id"], date.fromisoformat(match.group("start")) + timedelta(days=3), self.current["url"]))
                 self.current = None
                 self.widget_depth = None
-                self.paragraph_depth = 0
-                self.paragraph_parts = []
             self.depth -= 1
 
 
