@@ -158,6 +158,8 @@ class _EditableBoxParser(HTMLParser):
     def handle_endtag(self, tag):
         if tag == "p" and self.in_paragraph:
             label = " ".join("".join(self.paragraph_parts).split()).lower()
+            if re.search(r"plus que\s+\d+\s+jours?\s+pour\s+modifier", label, re.I):
+                self.current["status"] = label
             # Quitoque displays the actual delivery weekday in the widget.
             for name, weekday in (
                 ("lundi", 0), ("mardi", 1), ("mercredi", 2),
