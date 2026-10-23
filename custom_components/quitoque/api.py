@@ -163,7 +163,7 @@ class _EditableBoxParser(HTMLParser):
                 ("lundi", 0), ("mardi", 1), ("mercredi", 2),
                 ("jeudi", 3), ("vendredi", 4), ("samedi", 5), ("dimanche", 6),
             ):
-                if re.search(r"\\b" + name + r"\\b", label):
+                if re.search(r"\b" + name + r"\b", label):
                     self.current["weekday"] = weekday
                     break
             self.in_paragraph = False
