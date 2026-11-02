@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import date, timedelta
-import time
 from typing import TYPE_CHECKING
 
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.components.http.auth import async_sign_path
 from homeassistant.components import persistent_notification
 from homeassistant.util import dt as dt_util
 
@@ -246,7 +246,7 @@ async def async_generate_pdfs(entry: QuitoqueConfigEntry) -> dict:
                         image_bytes,
                     )
                     generated.append(
-                        (recipe.name, recipe_pdf_local_url(recipe.name))
+                        (recipe.name, async_sign_path(hass, recipe_pdf_local_url(recipe.name), timedelta(minutes=30)))
                     )
                 except Exception as err:
                     errors.append(f"{recipe.name}: {err}")
@@ -259,7 +259,7 @@ async def async_generate_pdfs(entry: QuitoqueConfigEntry) -> dict:
                 str(output_directory),
             )
             _set_sensor(entry, "last_pdf_generation", dt_util.utcnow())
-            archive_url = f"{PDF_ARCHIVE_LOCAL_URL}?v={time.time_ns()}"
+            archive_url = async_sign_path(hass, PDF_ARCHIVE_LOCAL_URL, timedelta(minutes=30))
 
         if errors and not generated:
             _set_status(entry, STATUS_ERROR, "; ".join(errors))
