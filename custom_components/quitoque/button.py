@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 
 from homeassistant.components import persistent_notification
 from homeassistant.components.button import ButtonEntity
@@ -92,13 +91,12 @@ class QuitoquePdfButton(QuitoqueEntity, ButtonEntity):
     async def async_press(self) -> None:
         result = await async_generate_pdfs(self._entry)
 
-        version_token = time.time_ns()
         generated = result["generated"]
         errors = result["errors"]
         archive_url = result["archive_url"]
 
         links = "<br>".join(
-            f'<a href="{url}?v={version_token}" target="_blank" download>{name}</a>'
+            f'<a href="{url}" target="_blank" download>{name}</a>'
             for name, url in generated
         )
 
