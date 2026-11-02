@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import quote
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
@@ -41,7 +42,7 @@ class QuitoqueRecipeDownloadView(HomeAssistantView):
         response = web.FileResponse(path)
         response.content_type = content_type
         response.headers["Content-Disposition"] = (
-            "attachment; filename*=UTF-8''" + __import__("urllib.parse", fromlist=["quote"]).quote(filename)
+            "attachment; filename*=UTF-8''" + quote(filename)
         )
         response.headers["Cache-Control"] = "private, no-store"
         return response
