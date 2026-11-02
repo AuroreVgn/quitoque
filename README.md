@@ -85,12 +85,12 @@ Intégration personnalisée **Home Assistant** permettant de récupérer les pro
 - Actualisation manuelle sans recharger l'intégration.
 - Notification Home Assistant optionnelle après une synchronisation du calendrier.
 - Génération d'un **PDF par recette**, avec image, durée, portions et ingrédients/quantités lorsqu'ils sont fournis par Quitoque.
-- Téléchargement individuel des PDF ou de l'ensemble dans une archive ZIP.
+- Téléchargement individuel des PDF ou de l'ensemble dans une archive ZIP via des liens signés temporaires (30 minutes), sans exposition des fichiers dans `/config/www`.
 - Suppression automatique des PDF après un délai configurable.
 - Verrouillage temporaire des boutons pendant une actualisation, une synchronisation ou une génération PDF.
 - Six entités de **diagnostic persistantes** mémorisent la dernière synchronisation du calendrier, la dernière génération des PDF, la dernière connexion réussie, la dernière reconnexion automatique, le résultat de la dernière action et la dernière erreur, y compris après un redémarrage de Home Assistant.
 - **Dashboard Quitoque** permettant de consulter les prochaines livraisons et d'accéder rapidement aux principales actions.
-- **Carte Lovelace Quitoque Card** avec affichage des recettes, images, temps en cuisine, portions et plusieurs modes de présentation.
+- **Carte Lovelace Quitoque Card intégrée**, sans installation séparée, avec affichage des recettes, images, temps en cuisine, portions et plusieurs modes de présentation.
 - Interface disponible en **français et anglais**.
 
 <a name="toc-section-3"></a>
@@ -117,7 +117,7 @@ Si une page ou une donnée n'est plus détectée, ouvrez une issue en fournissan
 
 #### Manuellement
 
-Cette intégration étant un dépôt personnalisé, il faut l'ajouter une première fois dans HACS :
+Tant que l'intégration n'est pas référencée dans le catalogue HACS par défaut, ajoutez-la comme dépôt personnalisé :
 
 1. Ouvrir **HACS** → **Intégrations**.
 2. Ouvrir le menu **⋮** → **Dépôts personnalisés**.
@@ -294,9 +294,420 @@ Il est disponible [ici](https://github.com/AuroreVgn/quitoque/tree/main/dashboar
 
 ## 🧩 Carte Lovelace — Quitoque Card
 
-Une carte Lovelace dédiée, **Quitoque Card**, est également disponible pour afficher les informations Quitoque directement dans un tableau de bord Home Assistant.
+La carte Quitoque est **incluse dans l'intégration** : il n'est plus nécessaire d'installer séparément le dépôt `quitoque_card`.
 
-Elle est disponible [ici](https://github.com/AuroreVgn/quitoque_card).
+Après installation et redémarrage de Home Assistant, la ressource **Module JavaScript** est enregistrée automatiquement :
+
+```text
+/quitoque/quitoque-card.js
+```
+
+Ajoutez une carte manuelle `type: custom:quitoque-card` ou utilisez son éditeur graphique.
+
+> **Migration depuis l'ancienne carte HACS :** désinstallez l'ancienne carte séparée et supprimez uniquement son ancienne ressource JavaScript dans Paramètres → Tableaux de bord → Ressources, si elle existe. Conservez `/quitoque/quitoque-card.js`. Les configurations YAML `type: custom:quitoque-card` sont conservées.
+
+Les captures d'écran historiques restent disponibles dans [le dépôt de la carte](https://github.com/AuroreVgn/quitoque_card/tree/main/assets).
+
+### Configuration minimale
+
+Une fois la ressource chargée, ajouter une carte manuelle :
+
+```yaml
+type: custom:quitoque-card
+```
+
+La carte utilise par défaut les noms d'entités classiques de l'intégration Quitoque.
+
+Toutes les entités peuvent également être sélectionnées depuis l'éditeur graphique.
+
+
+
+### Exemple de configuration complète
+
+```yaml
+type: custom:quitoque-card
+
+title: Quitoque
+display_mode: detailed
+show_empty_weeks: true
+show_actions: true
+recipes_collapsed: false
+show_recipe_images: true
+image_size: medium
+
+delivery_week_0: sensor.quitoque_livraison_cette_semaine
+delivery_week_1: sensor.quitoque_livraison_dans_1_semaine
+delivery_week_2: sensor.quitoque_livraison_dans_2_semaines
+delivery_week_3: sensor.quitoque_livraison_dans_3_semaines
+delivery_week_4: sensor.quitoque_livraison_dans_4_semaines
+
+recipe_count_week_0: sensor.quitoque_nombre_de_recettes_cette_semaine
+recipe_count_week_1: sensor.quitoque_nombre_de_recettes_dans_1_semaine
+recipe_count_week_2: sensor.quitoque_nombre_de_recettes_dans_2_semaines
+recipe_count_week_3: sensor.quitoque_nombre_de_recettes_dans_3_semaines
+recipe_count_week_4: sensor.quitoque_nombre_de_recettes_dans_4_semaines
+
+refresh_button: button.quitoque_actualiser
+calendar_button: button.quitoque_ajouter_les_recettes_au_calendrier
+pdf_button: button.quitoque_generer_et_telecharger_les_pdf
+
+# Facultatif si plusieurs instances Quitoque sont configurées.
+config_entry_id: ""
+
+calendar_url: /calendar
+calendar_url_name: Ouvrir calendrier
+```
+
+> [!NOTE]
+> Dans l'éditeur graphique, `config_entry_id` n'est pas saisi manuellement : Home Assistant propose directement les instances Quitoque disponibles dans un menu déroulant.
+
+
+
+#### 📊 Entités utilisées
+
+#### Livraisons
+
+Par défaut :
+
+```yaml
+delivery_week_0: sensor.quitoque_livraison_cette_semaine
+delivery_week_1: sensor.quitoque_livraison_dans_1_semaine
+delivery_week_2: sensor.quitoque_livraison_dans_2_semaines
+delivery_week_3: sensor.quitoque_livraison_dans_3_semaines
+delivery_week_4: sensor.quitoque_livraison_dans_4_semaines
+```
+
+#### Recettes
+
+Par défaut :
+
+```yaml
+recipe_count_week_0: sensor.quitoque_nombre_de_recettes_cette_semaine
+recipe_count_week_1: sensor.quitoque_nombre_de_recettes_dans_1_semaine
+recipe_count_week_2: sensor.quitoque_nombre_de_recettes_dans_2_semaines
+recipe_count_week_3: sensor.quitoque_nombre_de_recettes_dans_3_semaines
+recipe_count_week_4: sensor.quitoque_nombre_de_recettes_dans_4_semaines
+```
+
+#### Boutons Quitoque
+
+Par défaut :
+
+```yaml
+refresh_button: button.quitoque_actualiser
+calendar_button: button.quitoque_ajouter_les_recettes_au_calendrier
+pdf_button: button.quitoque_generer_et_telecharger_les_pdf
+```
+
+Le bouton **Supprimer** n'utilise pas une entité `button.*`. Il appelle directement le service :
+
+```text
+quitoque.cleanup_pdfs
+```
+
+Si plusieurs instances de l'intégration Quitoque sont configurées, l'instance concernée peut être choisie depuis l'éditeur graphique.
+
+
+
+### Modes d'affichage
+
+#### Détaillé
+
+Le mode **Détaillé** affiche :
+
+- la livraison sélectionnée ;
+- sa date ;
+- son créneau ;
+- son statut ;
+- le nombre de recettes ;
+- les fiches de recettes avec image, durée en cuisine et portions.
+
+Exemple :
+
+```text
+Quitoque
+
+Actualiser | Calendrier | PDF | Supprimer
+
+S0   S+1   S+2   S+3   S+4
+
+Prochaine box
+mercredi 26 août 2026
+08h00 → 13h00
+dans 4 jours
+BOX ACTIVE
+
+Recettes (4)
+
+[IMAGE] Tarte de bricks aux nectarines...
+        Cuisine 45 min
+        2 personnes
+```
+
+#### Compact
+
+Le mode **Compact** fournit une vue synthétique de S0 à S+4 avec le nombre de recettes de chaque semaine.
+
+Il est adapté aux dashboards où l'espace disponible est limité.
+
+#### Planning
+
+Le mode **Planning** présente les semaines sous forme de liste :
+
+```text
+S0   mercredi 26 août   08h00 → 13h00   4 🍽️
+S+1  mercredi 2 sept.   08h00 → 13h00   3 🍽️
+S+2  Aucune livraison                    —
+```
+
+
+
+### Éditeur graphique
+
+La carte fournit un éditeur Home Assistant permettant de configurer directement les options sans modifier le YAML.
+
+#### Affichage
+
+Les options disponibles comprennent notamment :
+
+- **Titre**
+- **Mode d'affichage**
+  - Détaillé
+  - Compact
+  - Planning
+- **Afficher aussi les semaines sans livraison**
+- **Afficher les boutons d'action**
+- **Replier les recettes par défaut**
+- **Afficher les images des recettes**
+- **Taille des images**
+  - Petite
+  - Moyenne
+  - Grande
+
+#### Sélection des entités et de l'instance Quitoque
+
+L'éditeur permet de sélectionner :
+
+- les 5 capteurs de livraison ;
+- les 5 capteurs de recettes ;
+- le bouton Actualiser ;
+- le bouton Ajouter au calendrier ;
+- le bouton PDF ;
+- l'**instance Quitoque utilisée pour la suppression des PDF**.
+
+Les champs utilisent les sélecteurs natifs Home Assistant.
+
+Le choix de l'instance Quitoque est facultatif lorsqu'une seule instance de l'intégration est configurée.
+
+
+
+### Boutons d'action
+
+Les boutons Quitoque sont affichés directement sous le titre de la carte et au-dessus des semaines S0 à S+4.
+
+Ils sont disposés sur une seule ligne :
+
+```text
+Actualiser | Calendrier | PDF | Supprimer
+```
+
+#### Actualiser
+
+Appuie sur :
+
+```text
+button.quitoque_actualiser
+```
+
+et force une mise à jour immédiate des données Quitoque.
+
+Pendant l'action, la carte affiche :
+
+```text
+Actualisation…
+```
+
+#### Calendrier
+
+Appuie sur :
+
+```text
+button.quitoque_ajouter_les_recettes_au_calendrier
+```
+
+et lance la synchronisation avec le calendrier configuré dans l'intégration.
+
+Pendant l'action :
+
+```text
+Synchronisation…
+```
+
+#### PDF
+
+Appuie sur :
+
+```text
+button.quitoque_generer_et_telecharger_les_pdf
+```
+
+et lance la génération des fiches PDF.
+
+Pendant l'action :
+
+```text
+Génération PDF…
+```
+
+#### Supprimer
+
+Appelle directement le service :
+
+```text
+quitoque.cleanup_pdfs
+```
+
+et supprime les PDF et archives générés par l'intégration Quitoque.
+
+Pendant l'action :
+
+```text
+Suppression…
+```
+
+Si plusieurs instances Quitoque sont configurées, l'instance cible peut être choisie dans l'éditeur graphique grâce au sélecteur natif Home Assistant.
+
+Les autres boutons sont temporairement désactivés pendant l'exécution d'une action.
+
+
+
+### Calendrier personnalisé
+
+La carte peut également afficher un bouton indépendant permettant d'ouvrir un calendrier ou n'importe quelle URL.
+
+Ce bouton apparaît dans l'en-tête de la carte, à droite du résumé du nombre de box et de recettes.
+
+Deux champs sont disponibles dans l'éditeur :
+
+```text
+URL du calendrier externe
+Nom du bouton calendrier
+```
+
+#### Exemples d'URL
+
+Calendrier Home Assistant :
+
+```text
+/calendar
+```
+
+ou simplement :
+
+```text
+calendar
+```
+
+Une route Home Assistant personnalisée :
+
+```text
+/lovelace/calendrier
+```
+
+Un calendrier externe :
+
+```text
+https://calendar.google.com/
+```
+
+Une URL saisie sans protocole telle que :
+
+```text
+calendar.google.com
+```
+
+est automatiquement interprétée comme :
+
+```text
+https://calendar.google.com
+```
+
+Sur mobile, le bouton calendrier externe peut être réduit à son icône afin de conserver un en-tête compact.
+
+
+
+### Images des recettes
+
+La carte utilise :
+
+```yaml
+image_url
+```
+
+dans l'attribut `recipe_details`.
+
+Si aucune image n'est disponible, une icône :
+
+```text
+mdi:chef-hat
+```
+
+est affichée à la place.
+
+Les images utilisent le chargement différé (`loading="lazy"`).
+
+Les images déjà chargées sont réutilisées lors des mises à jour, afin de limiter le clignotement sur Safari iOS. Les changements d’état sans rapport avec Quitoque ne reconstruisent plus la carte.
+
+
+
+### Recettes repliables
+
+En mode détaillé, la liste des recettes peut être ouverte ou fermée.
+
+L'option :
+
+```text
+Replier les recettes par défaut
+```
+
+permet de choisir son état initial.
+
+
+
+### Semaines sans livraison
+
+La carte distingue plusieurs états :
+
+- livraison active
+- aucune box
+- entité indisponible
+- entité absente
+
+Si l'option :
+
+```text
+Afficher aussi les semaines sans livraison
+```
+
+est désactivée, seules les semaines disposant d'une box sont conservées dans la navigation, lorsqu'il existe au moins une livraison active.
+
+
+
+### Responsive / mobile
+
+La carte adapte automatiquement sa présentation à la largeur disponible.
+
+Sur petit écran :
+
+- S0 à S+4 deviennent horizontalement défilables ;
+- les 4 actions restent disposées sur une seule ligne ;
+- le résumé de l'en-tête est simplifié ;
+- le bouton calendrier externe utilise principalement son icône ;
+- les images de grande taille sont réduites.
+
+
+
+
 
 <a name="toc-section-9"></a>
 
