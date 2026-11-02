@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_time_interval
+from .http import QuitoqueRecipeDownloadView
 
 from .actions import (
     async_delete_recipes_archive,
@@ -229,6 +230,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: QuitoqueConfigEntry) -> 
             _PDF_CLEANUP_INTERVAL,
         )
     )
+
+    if not hass.data.get("quitoque_http_registered"):
+        hass.http.register_view(QuitoqueRecipeDownloadView(hass))
+        hass.data["quitoque_http_registered"] = True
 
     await _async_register_services(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
