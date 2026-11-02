@@ -35,9 +35,9 @@ from reportlab.platypus import (
 from .models import QuitoqueRecipeDetails
 
 PDF_DIRECTORY_RELATIVE_PATH = "quitoque/recettes"
-PDF_DIRECTORY_LOCAL_URL = "/local/quitoque/recettes"
+PDF_DIRECTORY_LOCAL_URL = "/api/quitoque/recipes"
 PDF_ARCHIVE_RELATIVE_PATH = "quitoque/recettes_quitoque.zip"
-PDF_ARCHIVE_LOCAL_URL = "/local/quitoque/recettes_quitoque.zip"
+PDF_ARCHIVE_LOCAL_URL = "/api/quitoque/recipes/recettes_quitoque.zip"
 
 
 def _optimize_recipe_image(image_bytes: bytes) -> bytes:
@@ -65,8 +65,8 @@ def cleanup_expired_recipe_pdfs(
         return 0, False
 
     cutoff = time.time() - (retention_days * 86400)
-    directory = Path(config_path) / "www" / PDF_DIRECTORY_RELATIVE_PATH
-    archive_path = Path(config_path) / "www" / PDF_ARCHIVE_RELATIVE_PATH
+    directory = Path(config_path) / PDF_DIRECTORY_RELATIVE_PATH
+    archive_path = Path(config_path) / PDF_ARCHIVE_RELATIVE_PATH
 
     deleted = 0
     archive_deleted = False
@@ -101,7 +101,7 @@ def delete_recipes_archive(config_path: str) -> bool:
     Individual recipe PDFs are intentionally preserved.
     Returns True when an archive was deleted.
     """
-    archive_path = Path(config_path) / "www" / PDF_ARCHIVE_RELATIVE_PATH
+    archive_path = Path(config_path) / PDF_ARCHIVE_RELATIVE_PATH
 
     try:
         archive_path.unlink()
@@ -113,8 +113,8 @@ def delete_recipes_archive(config_path: str) -> bool:
 
 def clear_generated_recipe_files(config_path: str) -> tuple[int, bool]:
     """Immediately delete all generated Quitoque PDFs and the ZIP archive."""
-    directory = Path(config_path) / "www" / PDF_DIRECTORY_RELATIVE_PATH
-    archive_path = Path(config_path) / "www" / PDF_ARCHIVE_RELATIVE_PATH
+    directory = Path(config_path) / PDF_DIRECTORY_RELATIVE_PATH
+    archive_path = Path(config_path) / PDF_ARCHIVE_RELATIVE_PATH
 
     deleted = 0
     if directory.exists():
@@ -140,7 +140,7 @@ def clear_generated_recipe_files(config_path: str) -> tuple[int, bool]:
 
 def prepare_pdf_directory(config_path: str) -> Path:
     """Create a clean directory for the current Quitoque recipe PDFs."""
-    directory = Path(config_path) / "www" / PDF_DIRECTORY_RELATIVE_PATH
+    directory = Path(config_path) / PDF_DIRECTORY_RELATIVE_PATH
     if directory.exists():
         shutil.rmtree(directory)
     directory.mkdir(parents=True, exist_ok=True)
@@ -164,7 +164,7 @@ def recipe_pdf_local_url(recipe_name: str) -> str:
 
 def generate_recipes_archive(config_path: str, pdf_directory: str) -> str:
     """Create a fresh ZIP archive containing only the current recipe PDFs."""
-    archive_path = Path(config_path) / "www" / PDF_ARCHIVE_RELATIVE_PATH
+    archive_path = Path(config_path) / PDF_ARCHIVE_RELATIVE_PATH
     archive_path.parent.mkdir(parents=True, exist_ok=True)
     temp_archive = archive_path.with_name(
         f".{archive_path.name}.{time.time_ns()}.tmp"
