@@ -235,7 +235,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                     catalogue = catalogue_metadata.get(recipe.name, {})
 
                     if recipe.category == "market":
-                        _LOGGER.warning(
+                        _LOGGER.debug(
                             "DIAG Quitoque MARKET DISH - résultat : "
                             "id=%s | nom=%s | portions=%s | image=%s | "
                             "total=%s | cuisine=%s | url=%s",
