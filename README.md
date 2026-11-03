@@ -297,8 +297,6 @@ Ajoutez une carte manuelle `type: custom:quitoque-card` ou utilisez son éditeur
 | :---: | :---: | :---: |
 | <img src="https://raw.githubusercontent.com/AuroreVgn/quitoque_card/main/assets/quitoque_card_detail.png" alt="Quitoque Card — mode détaillé" width="290"> | <img src="https://raw.githubusercontent.com/AuroreVgn/quitoque_card/main/assets/quitoque-card-compact.png" alt="Quitoque Card — mode compact" width="290"> | <img src="https://raw.githubusercontent.com/AuroreVgn/quitoque_card/main/assets/quitoque-card-planning.png" alt="Quitoque Card — mode planning" width="290"> |
 
-Les captures proviennent du [dépôt historique de la carte](https://github.com/AuroreVgn/quitoque_card/tree/main/assets). **L'installation et la documentation à jour sont dans ce dépôt principal**, ci-dessous.
-
 ### Configuration minimale
 
 Une fois la ressource chargée, ajouter une carte manuelle :
