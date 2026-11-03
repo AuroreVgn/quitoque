@@ -32,7 +32,7 @@ Si cette intégration vous est utile et que vous souhaitez soutenir son dévelop
 - [⚙️ Configuration](#toc-section-5)
 - [📊 Entités créées](#toc-section-6)
 - [📈 Dashboard Quitoque](#toc-section-7)
-- [🧩 Carte Lovelace — Quitoque Card](#toc-section-8)
+- [🧩 Carte Lovelace intégrée](#toc-section-8)
 - [📅 Calendrier](#toc-section-9)
 - [📅 Utilisation avec Google Calendar](#toc-section-10)
 - [📄 PDF des recettes](#toc-section-11)
@@ -42,8 +42,6 @@ Si cette intégration vous est utile et que vous souhaitez soutenir son dévelop
 - [🛠️ Dépannage](#toc-section-15)
 - [🤝 Contributions et problèmes](#toc-section-16)
 - [📄 Licence](#toc-section-17)
-
-<a name="toc-section-1"></a>
 
 <a name="toc-section-1"></a>
 
@@ -277,7 +275,7 @@ Il est disponible [ici](https://github.com/AuroreVgn/quitoque/tree/main/dashboar
 
 <a name="toc-section-8"></a>
 
-## 🧩 Carte Lovelace — Quitoque Card
+## 🧩 Carte Lovelace intégrée
 
 La carte Quitoque est **incluse dans l'intégration** : il n'est plus nécessaire d'installer séparément le dépôt `quitoque_card`.
 
