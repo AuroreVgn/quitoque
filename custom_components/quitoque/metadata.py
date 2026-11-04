@@ -21,6 +21,16 @@ def _clean(value: object) -> str:
     return re.sub(r"\s+", " ", unescape(str(value))).strip()
 
 
+def valid_recipe_image(value: object) -> str | None:
+    """Discard Quitoque generic placeholders instead of caching them as recipe images."""
+    if not isinstance(value, str):
+        return None
+    url = value.strip()
+    if not url or "placeholder" in url.casefold().split("?", 1)[0]:
+        return None
+    return url
+
+
 def _normalise_name(value: str) -> str:
     """Normalise a recipe title for loose JSON-LD matching."""
     value = unescape(value).casefold()
@@ -65,7 +75,7 @@ class _RecipeCatalogueParser(HTMLParser):
                 or attributes.get("data-src")
                 or attributes.get("data-lazy-src")
             )
-            if src and self._image_url is None:
+            if valid_recipe_image(src) and self._image_url is None:
                 self._image_url = src
 
     def handle_data(self, data: str) -> None:
@@ -226,7 +236,7 @@ async def async_resolve_recipe_catalogue_metadata(
                 "total_duration_minutes": _catalogue_card_duration(text),
                 "image_url": (
                     urljoin(final_url, str(image))
-                    if image
+                    if valid_recipe_image(image)
                     else None
                 ),
             }
@@ -553,10 +563,10 @@ def _image_from_recipe(
             image = image[0] if image else None
         if isinstance(image, dict):
             image = image.get("url") or image.get("contentUrl")
-        if isinstance(image, str) and image.strip():
+        if valid_recipe_image(image):
             return urljoin(final_url, image.strip())
 
-    return _extract_recipe_image_url(html, final_url)
+    return valid_recipe_image(_extract_recipe_image_url(html, final_url))
 
 
 def _public_recipe_urls_from_product_url(value: str | None) -> tuple[str, ...]:
@@ -639,7 +649,7 @@ async def async_get_recipe_card_metadata(
             "total_duration_minutes": derived_total,
             "kitchen_duration_minutes": recipe.duration_minutes,
             "servings": None,
-            "image_url": derived_image or recipe.image_url,
+            "image_url": valid_recipe_image(derived_image) or valid_recipe_image(recipe.image_url),
         }
 
     if not client._authenticated:
@@ -692,16 +702,16 @@ async def async_get_recipe_card_metadata(
 
         image_url = (
             _image_from_recipe(recipe_json, html, final_url)
-            or recipe.image_url
+            or valid_recipe_image(recipe.image_url)
         )
 
-        if total is None:
+        if total is None or not image_url:
             derived_total, derived_image = await _async_total_from_derived_public_url(
                 client,
                 recipe,
                 product_url or final_url,
             )
-            if derived_total is not None:
+            if total is None and derived_total is not None:
                 total = derived_total
             if not image_url and derived_image:
                 image_url = derived_image
@@ -709,7 +719,7 @@ async def async_get_recipe_card_metadata(
         # If the caller supplied a separate catalogue/public recipe URL, use it
         # as a last source for total time. This is particularly useful for
         # recipes whose product slug and public recipe slug differ slightly.
-        if total is None and detail_url and detail_url != recipe_url:
+        if (total is None or not image_url) and detail_url and detail_url != recipe_url:
             try:
                 public_html, public_final_url = await client._async_get_text(detail_url)
             except Exception:
@@ -719,7 +729,7 @@ async def async_get_recipe_card_metadata(
             if public_html and _recipe_page_matches(public_html, recipe.name):
                 public_json = _best_recipe_json_ld(public_html, recipe.name)
                 public_total, _ = _extract_times(public_html, public_json)
-                if public_total is not None:
+                if total is None and public_total is not None:
                     total = public_total
                 if not image_url:
                     image_url = _image_from_recipe(

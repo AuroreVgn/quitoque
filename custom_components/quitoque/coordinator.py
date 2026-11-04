@@ -18,6 +18,7 @@ from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 from .metadata import (
     async_get_recipe_card_metadata,
     async_resolve_recipe_catalogue_metadata,
+    valid_recipe_image,
 )
 from .models import QuitoqueOrder
 from .notifications import QuitoqueOrderNotifications
@@ -83,6 +84,10 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                 order_id, item_id = (int(value) for value in raw_key.split(":", 1))
             except ValueError:
                 continue
+            metadata = metadata.copy()
+            if metadata.get("image_url") and not valid_recipe_image(metadata["image_url"]):
+                metadata["image_url"] = None
+                metadata["_complete"] = False
             self.recipe_metadata[(order_id, item_id)] = metadata
 
         if self.recipe_metadata:
@@ -137,6 +142,9 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
             for recipe in order.recipes
             if (
                 recipe.category in {"kit", "market"}
+                or not valid_recipe_image(
+                    self.recipe_metadata.get((order.order_id, recipe.item_id), {}).get("image_url")
+                )
                 or not self.recipe_metadata.get(
                     (order.order_id, recipe.item_id), {}
                 ).get("_complete")
@@ -191,6 +199,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                 if (
                     cached
                     and cached.get("_complete")
+                    and valid_recipe_image(cached.get("image_url"))
                     and recipe.category not in {"kit", "market"}
                 ):
                     continue
@@ -248,7 +257,8 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                             recipe.detail_url,
                         )
 
-                    history_image = history.get("image_url")
+                    metadata["image_url"] = valid_recipe_image(metadata.get("image_url"))
+                    history_image = valid_recipe_image(history.get("image_url"))
                     if not metadata.get("image_url") and history_image:
                         metadata["image_url"] = history_image
 
@@ -261,7 +271,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                         ]
                     if (
                         not metadata.get("image_url")
-                        and catalogue.get("image_url")
+                        and valid_recipe_image(catalogue.get("image_url"))
                     ):
                         metadata["image_url"] = catalogue["image_url"]
                 except QuitoqueAuthenticationError:
@@ -283,7 +293,7 @@ class QuitoqueCoordinator(DataUpdateCoordinator[QuitoqueOrder | None]):
                     }
                     continue
 
-                metadata["_complete"] = True
+                metadata["_complete"] = bool(valid_recipe_image(metadata.get("image_url")))
                 self.recipe_metadata[key] = metadata
 
                 _LOGGER.debug(
